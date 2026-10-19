@@ -15,6 +15,19 @@ class TestALFI(unittest.TestCase):
             ai = ALFI(Path(folder) / "memory.json")
             self.assertIsNone(ai.classify("quasar nebula")[0])
 
+    def test_teaching_validation(self):
+        with tempfile.TemporaryDirectory() as folder:
+            ai = ALFI(Path(folder) / "memory.json")
+            with self.assertRaises(ValueError):
+                ai.teach("new_topic", "", "Answer")
+            self.assertNotIn("new_topic", ai.data)
+
+    def test_exact_learned_example(self):
+        with tempfile.TemporaryDirectory() as folder:
+            ai = ALFI(Path(folder) / "memory.json")
+            ai.teach("project_identity", "what is project inception?", "Phase One.")
+            self.assertEqual(ai.respond("What is project inception?"), "Phase One.")
+
     def test_learning_persists(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "memory.json"
