@@ -305,3 +305,26 @@ class Increment8CorrectiveTests(unittest.TestCase):
 
     def test_quantum_guard(self):
         self.assertIn("unsupported", factual_revision_guidance("Does quantum computing help optimization?", "Quantum computers can solve unconstrained optimization faster."))
+
+from conversational_intelligence import format_violation
+
+class Increment8FormatTests(unittest.TestCase):
+    def test_numeric_digits_only(self):
+        self.assertTrue(format_violation("Answer with just the number.", "Four."))
+        self.assertFalse(format_violation("Answer with just the number.", "4"))
+
+    def test_numbered_list_requires_separate_lines(self):
+        prompt = "Name exactly two things a plant needs. Use a numbered list."
+        self.assertTrue(format_violation(prompt, "1) Water and 2) Sunlight"))
+        self.assertFalse(format_violation(prompt, "1. Water\\n2. Sunlight"))
+
+    def test_numbered_list_exact_count(self):
+        prompt = "Name exactly two things a plant needs. Use a numbered list."
+        self.assertTrue(format_violation(prompt, "1. Water\\n2. Light\\n3. Air"))
+
+    def test_one_word_only(self):
+        self.assertFalse(format_violation("Answer with exactly one word.", "Yellow."))
+        self.assertTrue(format_violation("Answer with exactly one word.", "Bright yellow."))
+
+    def test_unconstrained_question_unaffected(self):
+        self.assertEqual(format_violation("Explain photosynthesis.", "A useful explanation."), "")
