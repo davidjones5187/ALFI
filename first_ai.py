@@ -8,7 +8,7 @@ import urllib.request
 from collections import Counter
 from pathlib import Path
 from memory_intelligence import MemoryStore
-from conversational_intelligence import resolve_followup, response_guidance
+from conversational_intelligence import resolve_followup, response_guidance, natural_acknowledgment
 
 MEMORY_FILE = Path(__file__).with_name("ai_memory.json")
 HISTORY_FILE = Path(__file__).with_name("conversation_history.json")
@@ -215,6 +215,9 @@ class ALFI:
                     "and llama3.2:3b is installed. Details: " + str(exc))
 
     def respond(self, message):
+        social = natural_acknowledgment(message)
+        if social is not None:
+            return social
         if self.is_memory_question(message):
             return self.memory_explanation()
         direct = self.direct_memory_answer(message)
