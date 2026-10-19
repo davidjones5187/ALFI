@@ -7,6 +7,7 @@ from collections import Counter
 from pathlib import Path
 
 MEMORY_FILE = Path(__file__).with_name("ai_memory.json")
+HISTORY_FILE = Path(__file__).with_name("conversation_history.json")
 DEFAULT_DATA = {
     "greeting": {"examples": ["hello", "hi", "hey", "good morning"], "responses": ["Hello! I'm A.L.F.I."]},
     "identity": {"examples": ["who are you", "what is your name", "tell me your name"], "responses": ["I'm A.L.F.I., Artificial Lifeform — First Iteration."]},
@@ -23,6 +24,7 @@ class ALFI:
         self.memory_file = Path(memory_file)
         self.data = self.load()
         self.train()
+        self.history = self.load_history()
 
     def load(self):
         if not self.memory_file.exists():
@@ -44,6 +46,24 @@ class ALFI:
 
     def save(self):
         self.memory_file.write_text(json.dumps(self.data, indent=2), encoding="utf-8")
+
+    def load_history(self):
+        try:
+            data = json.loads(HISTORY_FILE.read_text(encoding="utf-8"))
+            return data[-100:] if isinstance(data, list) else []
+        except (OSError, ValueError):
+            return []
+
+    def record(self, message, answer):
+        self.history.append({"user": message, "assistant": answer})
+        self.history = self.history[-100:]
+        try:
+            HISTORY_FILE.write_text(json.dumps(self.history, indent=2), encoding="utf-8")
+        except OSError as exc:
+            print(f"Warning: conversation history not saved: {exc}")
+
+    def recent_history(self, limit=5):
+        return self.history[-limit:]
 
     def train(self):
         self.counts = {}
@@ -77,6 +97,11 @@ class ALFI:
         return top, weights[top] / sum(weights.values())
 
     def respond(self, message):
+        # Follow-up references to the last discussed topic.
+        if tokenize(message) in (["tell", "me", "more"], ["more", "about", "that"]):
+            if self.history:
+                return "We were discussing: " + self.history[-1]["user"] + ". What would you like to know?"
+            return "What topic would you like to explore?"
         # Exact training examples are known, even when a small model assigns
         # them a low normalized probability.
         normalized = tokenize(message)
@@ -102,10 +127,35 @@ class ALFI:
         self.train()
         self.save()
 
+def teaching_mode(ai):
+    print("\\nTEACHING MODE — type /cancel at any prompt to leave.")
+    fields = []
+    for prompt in ("Topic", "Example message", "Response"):
+        value = input(prompt + ": ").strip()
+        if value.lower() == "/cancel":
+            print("Lesson canceled; nothing saved.")
+            return
+        if not value:
+            print("Lesson canceled: all fields are required.")
+            return
+        fields.append(value)
+    print("\\nReview your lesson:")
+    for label, value in zip(("Topic", "Example", "Response"), fields):
+        print(f"  {label}: {value}")
+    confirmation = input("Save lesson? [y/N]: ").strip().lower()
+    if confirmation not in ("y", "yes"):
+        print("Lesson canceled; nothing saved.")
+        return
+    try:
+        ai.teach(*fields)
+        print("A.L.F.I.: Learned and saved.")
+    except (ValueError, OSError) as exc:
+        print(f"A.L.F.I.: Could not save lesson: {exc}")
+
 def main():
     ai = ALFI()
-    print("A.L.F.I. | MyFirstAI — Inception")
-    print("Commands: /teach, /knowledge, /help, /quit")
+    print("A.L.F.I. 1.1 | Conversational Intelligence")
+    print("Commands: /teach, /knowledge, /history, /help, /quit")
     while True:
         try:
             message = input("You: ").strip()
@@ -119,17 +169,19 @@ def main():
             print("A.L.F.I.: Goodbye!")
             break
         if command == "/help":
-            print("/teach: add a topic | /knowledge: list topics | /quit: exit")
+            print("/teach: reviewed lesson | /knowledge: topics | /history: recent chats | /quit: exit")
         elif command == "/knowledge":
             print("Known topics:", ", ".join(sorted(ai.data)))
+        elif command == "/history":
+            for turn in ai.recent_history():
+                print("You:", turn["user"])
+                print("A.L.F.I.:", turn["assistant"])
         elif command == "/teach":
-            try:
-                ai.teach(input("Topic: "), input("Example message: "), input("Response: "))
-                print("A.L.F.I.: Learned and saved.")
-            except (ValueError, OSError) as exc:
-                print(f"A.L.F.I.: Could not save lesson: {exc}")
+            teaching_mode(ai)
         else:
-            print("A.L.F.I.:", ai.respond(message))
+            answer = ai.respond(message)
+            print("A.L.F.I.:", answer)
+            ai.record(message, answer)
 
 if __name__ == "__main__":
     main()
