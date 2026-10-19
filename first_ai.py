@@ -8,7 +8,7 @@ import urllib.request
 from collections import Counter
 from pathlib import Path
 from memory_intelligence import MemoryStore
-from conversational_intelligence import resolve_followup, response_guidance, natural_acknowledgment, clarification_needed, conversation_guidance, feedback_response, quality_guidance, adaptive_guidance, adaptive_clarification
+from conversational_intelligence import resolve_followup, response_guidance, natural_acknowledgment, clarification_needed, conversation_guidance, feedback_response, quality_guidance, adaptive_guidance, adaptive_clarification, precision_guidance, length_guidance, contextual_subject
 
 MEMORY_FILE = Path(__file__).with_name("ai_memory.json")
 HISTORY_FILE = Path(__file__).with_name("conversation_history.json")
@@ -199,7 +199,13 @@ class ALFI:
         messages.append({"role": "system", "content": conversation_guidance(message, self.recent_history(5))})
         messages.append({"role": "system", "content": quality_guidance(message)})
         messages.append({"role": "system", "content": adaptive_guidance(message, self.recent_history(5))})
+        messages.append({"role": "system", "content": precision_guidance(message, self.recent_history(5))})
+        messages.append({"role": "system", "content": length_guidance(message)})
         resolved = resolve_followup(message, self.recent_history(5))
+        if not resolved:
+            subject = contextual_subject(message, self.recent_history(5))
+            if subject:
+                resolved = "Why is the subject of this earlier question important? " + subject
         messages.append({"role": "user", "content": resolved or message})
         payload = json.dumps({"model": OLLAMA_MODEL, "messages": messages,
                               "stream": False}).encode("utf-8")
