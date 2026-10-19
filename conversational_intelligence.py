@@ -241,3 +241,26 @@ def length_guidance(message):
         return ("Explain mechanisms accurately with a compact structure. "
                 "Avoid exhaustive lists unless explicitly requested.")
     return "Answer directly, preferably in a short paragraph."
+
+
+# Increment 7: response control is advisory and never changes stored memory.
+REPHRASE = re.compile(r"^(?:actually\\b|i meant\\b|no,? i meant\\b|what i meant was\\b)", re.I)
+
+def increment7_guidance(message, history):
+    """Prioritize explicit brevity, avoid redundant corrections, and qualify claims."""
+    message = message.strip()
+    if not message or COMMAND.match(message):
+        return ""
+    rules = []
+    if BRIEF.search(message):
+        rules.append("PRIORITY: respond in no more than two short sentences, without headings, lists or preamble.")
+    elif DETAIL.search(message) or TECHNICAL.search(message):
+        rules.append("Give a focused technical explanation, avoiding an encyclopedia-style catalog.")
+    else:
+        rules.append("Answer the question first, then at most one short supporting paragraph.")
+    if REPHRASE.match(message):
+        rules.append("This is a conversational correction: address ONLY the corrected scope, do not restart the prior explanation, and do not claim memory was saved.")
+    elif history and isinstance(history[-1], dict) and isinstance(history[-1].get("assistant"), str):
+        rules.append("Do not restate points already given in the previous answer unless essential to the new question.")
+    rules.append("Do not promise universal quantum advantage, unbreakable encryption, or established speedups for generic optimization or machine learning. Backpropagation computes gradients; an optimizer updates parameters. Express uncertainty when evidence is limited.")
+    return " ".join(rules)
