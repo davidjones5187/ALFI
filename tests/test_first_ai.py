@@ -249,3 +249,26 @@ class HistoryGroundingRegressionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             ai = ALFI(Path(folder) / "memory.json", use_ollama=False)
             self.assertIsNone(ai.history_question_answer("What is a book?"))
+
+    def test_historical_lookup_skips_prior_meta_questions(self):
+        with tempfile.TemporaryDirectory() as folder:
+            ai = ALFI(Path(folder) / "memory.json", use_ollama=False)
+            ai.history = [
+                {"user": "If I leave a book on a table, where will it be?",
+                 "assistant": "On the table."},
+                {"user": "What did I ask you about the book in our earlier conversation?",
+                 "assistant": "An unrelated book."},
+            ]
+            answer = ai.respond("What did I ask you about the book in our earlier conversation?")
+            self.assertIn("If I leave a book on a table", answer)
+            self.assertNotIn("Your recorded earlier question was: What did I ask", answer)
+
+    def test_historical_lookup_only_meta_questions_reports_missing(self):
+        with tempfile.TemporaryDirectory() as folder:
+            ai = ALFI(Path(folder) / "memory.json", use_ollama=False)
+            ai.history = [
+                {"user": "What did I ask you about the book in our earlier conversation?",
+                 "assistant": "No record."},
+            ]
+            answer = ai.respond("What did I ask you about the book in our earlier conversation?")
+            self.assertIn("can't find", answer)
