@@ -4,3 +4,4 @@ __pycache__/
 .env
 ai_memory.json
 .DS_Store
+conversation_history.json
