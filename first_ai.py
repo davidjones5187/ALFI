@@ -8,7 +8,7 @@ import urllib.request
 from collections import Counter
 from pathlib import Path
 from memory_intelligence import MemoryStore
-from conversational_intelligence import resolve_followup, response_guidance, natural_acknowledgment, clarification_needed, conversation_guidance, feedback_response, quality_guidance, adaptive_guidance, adaptive_clarification, precision_guidance, length_guidance, contextual_subject
+from conversational_intelligence import resolve_followup, response_guidance, natural_acknowledgment, clarification_needed, conversation_guidance, feedback_response, quality_guidance, adaptive_guidance, adaptive_clarification, precision_guidance, length_guidance, increment7_guidance, contextual_subject
 
 MEMORY_FILE = Path(__file__).with_name("ai_memory.json")
 HISTORY_FILE = Path(__file__).with_name("conversation_history.json")
@@ -201,6 +201,7 @@ class ALFI:
         messages.append({"role": "system", "content": adaptive_guidance(message, self.recent_history(5))})
         messages.append({"role": "system", "content": precision_guidance(message, self.recent_history(5))})
         messages.append({"role": "system", "content": length_guidance(message)})
+        messages.append({"role": "system", "content": increment7_guidance(message, self.recent_history(5))})
         resolved = resolve_followup(message, self.recent_history(5))
         if not resolved:
             subject = contextual_subject(message, self.recent_history(5))
