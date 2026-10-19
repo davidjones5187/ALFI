@@ -1,6 +1,7 @@
 """A.L.F.I. — Artificial Lifeform, First Iteration."""
 import json
 import math
+import os
 import random
 import re
 import urllib.error
@@ -13,7 +14,7 @@ from conversational_intelligence import resolve_followup, response_guidance, nat
 MEMORY_FILE = Path(__file__).with_name("ai_memory.json")
 HISTORY_FILE = Path(__file__).with_name("conversation_history.json")
 OLLAMA_URL = "http://127.0.0.1:11434/api/chat"
-OLLAMA_MODEL = "llama3.2:3b"
+OLLAMA_MODEL = "gemma3:4b"  # Preferred development model; override with ALFI_OLLAMA_MODEL
 STOPWORDS = {"a", "an", "the", "is", "are", "what", "who", "how", "why", "does", "do", "you", "your", "me", "my", "of", "to", "about", "tell", "please", "it", "and", "was", "were"}
 DEFAULT_DATA = {
     "greeting": {"examples": ["hello", "hi", "hey", "good morning"], "responses": ["Hello! I'm A.L.F.I."]},
@@ -27,10 +28,11 @@ def tokenize(text):
     return re.findall(r"[a-z0-9']+", text.lower())
 
 class ALFI:
-    def __init__(self, memory_file=MEMORY_FILE, use_ollama=True, ollama_url=OLLAMA_URL):
+    def __init__(self, memory_file=MEMORY_FILE, use_ollama=True, ollama_url=OLLAMA_URL, ollama_model=None):
         self.memory_file = Path(memory_file)
         self.use_ollama = use_ollama
         self.ollama_url = ollama_url
+        self.ollama_model = ollama_model or os.environ.get("ALFI_OLLAMA_MODEL") or OLLAMA_MODEL
         self.structured_memory = MemoryStore(self.memory_file.with_name('structured_memory.json'))
         self.data = self.load()
         self.train()
@@ -202,7 +204,7 @@ class ALFI:
             if subject:
                 resolved = "Why is the subject of this earlier question important? " + subject
         messages.append({"role": "user", "content": resolved or message})
-        payload = json.dumps({"model": OLLAMA_MODEL, "messages": messages,
+        payload = json.dumps({"model": self.ollama_model, "messages": messages,
                               "stream": False}).encode("utf-8")
         request = urllib.request.Request(
             self.ollama_url, data=payload,
@@ -219,7 +221,7 @@ class ALFI:
                         {"role": "assistant", "content": answer},
                         {"role": "user", "content": ("Revise the previous answer without repeated steps. Preserve factual meaning and caveats. " + issue + (" Use at most two short sentences, no list." if "brief" in message.lower() else " Keep the answer focused and concise."))},
                     ]
-                    retry_payload = json.dumps({"model": OLLAMA_MODEL, "messages": revision_messages, "stream": False}).encode("utf-8")
+                    retry_payload = json.dumps({"model": self.ollama_model, "messages": revision_messages, "stream": False}).encode("utf-8")
                     retry_request = urllib.request.Request(self.ollama_url, data=retry_payload,
                         headers={"Content-Type": "application/json"}, method="POST")
                     try:
@@ -235,7 +237,7 @@ class ALFI:
             return "The local model returned an empty response. Please try again."
         except (urllib.error.URLError, TimeoutError, OSError, ValueError, KeyError) as exc:
             return ("I couldn't reach my local AI engine. Check that Ollama is running "
-                    "and llama3.2:3b is installed. Details: " + str(exc))
+                    "and " + self.ollama_model + " is installed. Details: " + str(exc))
 
     def respond(self, message):
         feedback = feedback_response(message)
