@@ -1,6 +1,6 @@
 """Regression tests for A.L.F.I. 1.6 follow-up resolution."""
 import unittest
-from conversational_intelligence import resolve_followup, response_guidance
+from conversational_intelligence import resolve_followup, response_guidance, natural_acknowledgment
 
 class ConversationalIntelligenceTests(unittest.TestCase):
     def test_example_retains_subject(self):
@@ -58,6 +58,22 @@ class ResponseIntelligenceTests(unittest.TestCase):
 
     def test_no_context_guidance(self):
         self.assertIn("Be concise by default", response_guidance("Hello", []))
+
+class NaturalAcknowledgmentTests(unittest.TestCase):
+    def test_praise_is_brief(self):
+        self.assertEqual(natural_acknowledgment("Great job!"), "Thanks! Glad that helped.")
+
+    def test_thanks_is_brief(self):
+        self.assertEqual(natural_acknowledgment("Thank you."), "You're welcome!")
+
+    def test_substantive_question_is_not_intercepted(self):
+        self.assertIsNone(natural_acknowledgment("Great job. Can you explain more?"))
+
+    def test_topic_change_is_not_intercepted(self):
+        self.assertIsNone(natural_acknowledgment("Explain quantum computing."))
+
+    def test_no_false_learning_claim(self):
+        self.assertNotIn("learn", natural_acknowledgment("Well done!").lower())
 
 
 if __name__ == "__main__":
