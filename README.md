@@ -31,3 +31,6 @@ A.L.F.I. stores learned examples in `ai_memory.json`, and conversation history l
 
 ## Version 1.4
 The assistant now tracks whether the last answer came from taught knowledge or from the language model. Follow-ups to generated answers use recent chat context. New `/forget` and `/clearhistory` commands ask for confirmation before removing a taught topic or local chat history. This does not change the model weights. Generated answers are not automatically saved as lessons.
+
+## Version 1.4.1 — Context Accuracy Patch
+Questions about whether A.L.F.I. learns permanently receive a code-defined explanation distinguishing model training, saved lessons, and locally stored chat history. Requests for examples explicitly include the previous subject and instructions to use an external scenario. These changes reduce, but cannot eliminate, misleading model output. The automated suite now has 17 tests; live Ollama output must still be evaluated manually because mocked API responses cannot validate language quality.
