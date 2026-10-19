@@ -134,10 +134,27 @@ class ALFI:
             return "I don't have additional details about that topic yet."
         return "Here's what I know about " + topic.replace("_", " ") + ": " + " ".join(responses)
 
+    def direct_memory_answer(self, message):
+        """Answer explicit saved-fact questions without model speculation."""
+        query = set(tokenize(message)) - STOPWORDS
+        if not query or not ("?" in message or message.lower().startswith(("what ", "which ", "who ", "where "))):
+            return None
+        candidates = []
+        for item in self.structured_memory.items:
+            if item["kind"] != "fact":
+                continue
+            key_terms = set(tokenize(item["key"])) - STOPWORDS
+            if key_terms and key_terms <= query:
+                candidates.append(item)
+        if len(candidates) != 1:
+            return None
+        item = candidates[0]
+        return f"Your saved {item['key']} is: {item['value']}. (User-provided memory; not independently verified.)"
+
     def memory_explanation(self):
         return ("No. Chatting does not retrain my model or permanently teach me new facts. "
                 "Conversations may be saved locally in conversation_history.json and reused "
-                "as context. Only /teach saves lessons in ai_memory.json. "
+                "as context. /teach saves lessons in ai_memory.json; /remember and /correct save structured facts in structured_memory.json. "
                 "Use /clearhistory to erase local chat history.")
 
     def is_memory_question(self, message):
@@ -153,10 +170,10 @@ class ALFI:
             "a helpful local AI assistant. Be concise, accurate, and acknowledge uncertainty. "
             "You are a language model, not a conscious lifeform. "
             "Your model weights do not change during chat. Conversation history is temporary context, "
-            "and only /teach saves permanent lessons. Never invent past interactions or "
+            "and only /teach or /remember saves explicitly provided facts or lessons. Never invent past interactions or "
             "claim to have learned or updated knowledge from ordinary conversation. "
             "For examples, use a concrete external scenario, not a story about your own learning. "
-            "Never say that chatting retrains your model. Chat logs can persist locally."
+            "Never say that chatting retrains your model. Chat logs can persist locally. A memory source such as explicit /correct records how a user entered a value, NOT independent verification. Never claim a saved memory was externally verified merely because of its source label."
         )}]
         relevant = self.structured_memory.search(message, limit=3)
         if relevant:
@@ -197,6 +214,9 @@ class ALFI:
     def respond(self, message):
         if self.is_memory_question(message):
             return self.memory_explanation()
+        direct = self.direct_memory_answer(message)
+        if direct is not None:
+            return direct
         words = tokenize(message)
         if words in (["tell", "me", "more"], ["more", "about", "that"], ["what", "else", "do", "you", "know"]):
             if self.last_source == "taught" and self.last_topic:
@@ -289,7 +309,7 @@ def teaching_mode(ai):
 
 def main():
     ai = ALFI()
-    print("A.L.F.I. 1.5 | Memory Intelligence")
+    print("A.L.F.I. 1.5.1 | Memory Integrity Patch")
     print("Commands: /teach, /knowledge, /forget, /history, /clearhistory, /remember, /memories, /recall, /correct, /forgetmemory, /help, /quit")
     while True:
         try:
@@ -328,8 +348,12 @@ def main():
                 print("Memory not found.")
             else:
                 print("Current:", old["value"])
-                value = input("Corrected value: ").strip()
-                if value and input("Save correction? [y/N]: ").strip().lower() in ("y", "yes"):
+                print("Enter the COMPLETE replacement value. Existing details are not automatically retained.")
+                value = input("Full corrected value: ").strip()
+                if value:
+                    print("Before:", old["value"])
+                    print("After: ", value)
+                if value and input("Replace the entire old value with this new value? [y/N]: ").strip().lower() in ("y", "yes"):
                     try:
                         ai.structured_memory.put(old["kind"], key, value, "explicit /correct")
                         print("Memory corrected.")
