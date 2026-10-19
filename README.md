@@ -49,3 +49,27 @@ Up to three relevant structured memories are supplied to Ollama for context; the
 The `/correct` prompt now displays the full old and new values and requires explicit confirmation that the entire value is replaced. Enter the complete corrected value, not only the changed words. Direct questions matching exactly one saved fact key return the stored value without asking Ollama to interpret the provenance. Other questions continue to use the model; model responses may still be inaccurate. Source labels indicate user input method, not external verification.
 
 To validate: `python3 -m unittest discover -s tests -v`, then run `python3 first_ai.py` and ask `What computer do I use for development?`. Verify the full saved value appears with a not-independently-verified notice. Test `/correct` with a new full replacement and restart.
+
+## 1.6 development — selectable local model (Gemma evaluation)
+
+On `feature/alfi-1.6-conversational-intelligence`, A.L.F.I. now uses `gemma3:4b` by default for model-generated responses. The stable `main` branch remains unchanged. The prior `llama3.2:3b` model remains available as a fallback.
+
+Install the preferred model and start A.L.F.I.:
+```bash
+ollama pull gemma3:4b
+python3 first_ai.py
+```
+
+Select Llama temporarily without editing code:
+```bash
+ALFI_OLLAMA_MODEL=llama3.2:3b python3 first_ai.py
+```
+
+The `ALFI_OLLAMA_MODEL` environment variable selects a model for that process; the optional `ALFI(ollama_model="...")` constructor argument overrides it. Model selection does not migrate, delete, or retrain stored memory. **Caution:** Running either model through the normal CLI appends to the existing `conversation_history.json`. For truly isolated comparative tests, use separate working copies or temporary test paths for history and memory. Existing `ai_memory.json`, `structured_memory.json`, and `conversation_history.json` are not changed by the model-selection implementation itself.
+
+Run regression tests:
+```bash
+python3 -m unittest discover -s tests -v
+```
+
+Live evaluation is still required: test basic unseen quantity comparisons, subtraction, conversational follow-ups, saved memory retrieval, latency, and memory footprint. Do not interpret direct-Ollama scores as proof of in-application performance.
