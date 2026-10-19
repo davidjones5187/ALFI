@@ -298,5 +298,5 @@ def response_needs_revision(message, answer):
     text = answer.strip()
     if not text:
         return False
-    sentences = re.split(r"(?<=[.!?])\\s+", text)
-    return len(sentences) > 2 or len(text.split()) > 65 or bool(re.search(r"(?m)^\\s*(?:[-*] |\\d+[.)] )", text))
+    sentences = re.split(r"(?<=[.!?])\s+", text)
+    return len(sentences) > 2 or len(text.split()) > 65 or bool(re.search(r"(?m)^\s*(?:[-*] |\d+[.)] )", text))
