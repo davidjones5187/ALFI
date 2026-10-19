@@ -129,3 +129,12 @@ User installed `gemma3:4b` via `ollama pull gemma3:4b` and ran `ollama run gemma
 3. Two five-kilogram boxes, books versus clothes: "They both weigh the same! Each box has a mass of five kilograms..." — **2/2**.
 
 **Gemma direct Ollama: 6/6 (100%).** Previous A.L.F.I. application responses to the same three prompts: **4/6 (66.7%)**, failing feathers/rocks. These are **not controlled head-to-head model-only tests**: Llama ran inside A.L.F.I. with application prompts/memory/settings, Gemma ran directly through Ollama, and prompts were already known. Do not infer proven model superiority or learning. Next compare both models directly with identical settings and fresh held-out foundational questions, then test Gemma in an isolated A.L.F.I. development configuration only if warranted. Do not alter stable main or persistent memory. Stage 3 remains under assessment, Increment 8 open, Increment 9 on hold.
+
+## Direct Ollama head-to-head — foundational set (2026-10-19)
+
+User supplied direct `ollama run llama3.2:3b` and `ollama run gemma3:4b` transcripts, testing identical prompts:
+1. Eight oranges minus three: Llama **2/2** (five); Gemma **2/2** (five).
+2. Two kilograms of rice versus two kilograms of potatoes: Llama **0/2**, incorrectly asserted potatoes weigh more and falsely claimed "1 kilogram of rice weighs around 600-650 grams" and "1 kilogram of potatoes weighs around 700-800 grams"; Gemma **2/2**, equal weights.
+3. One liter minus half a liter: Llama **2/2** (0.5 L); Gemma **2/2** (0.5 L).
+
+**Llama direct: 4/6 (66.7%). Gemma direct: 6/6 (100%).** Gemma answered all three correctly on two supplied direct runs; the first run included three previously used prompts immediately before the new questions, so only the later standalone Gemma run provides a cleaner three-question comparison. The test was not blind and settings (temperature, context, seed) were not explicitly matched; no timing or RAM measurements. Gemma's better performance on these prompts is observed, not proven general superiority. The `ollama run llama3.2:3b` command initially entered at the Gemma `>>>` prompt was treated as chat text, not executed; user then exited with `/bye` and successfully launched Llama. Next: consider isolated, reversible Gemma integration on feature branch only, with memory backed up and model selection configurable; repeat unseen foundational trials inside A.L.F.I. before adoption. Stable main untouched. Increment 8 open, Increment 9 on hold.
