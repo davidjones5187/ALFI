@@ -117,3 +117,44 @@ def conversation_guidance(message, history):
                 "unrelated older topics.")
     return ("Answer the current message without assuming it refers to an "
             "earlier subject. Avoid repeating social acknowledgments.")
+
+# Increment 4: explicit, bounded feedback signals. No persistent writes.
+DISSATISFACTION = re.compile(
+    r"^(?:that's (?:not right|incorrect|wrong)|that is (?:incorrect|wrong)|"
+    r"you're wrong|you are wrong|not quite|that's not what i (?:asked|meant)|"
+    r"that (?:didn't|doesn't) answer my question)[.! ]*$", re.I
+)
+
+def feedback_intent(message):
+    """Classify unambiguous feedback; leave substantive messages untouched."""
+    message = message.strip()
+    if not message or COMMAND.match(message):
+        return "other"
+    if CORRECTION.match(message):
+        return "correction"
+    if DISSATISFACTION.fullmatch(message):
+        return "dissatisfaction"
+    if SOCIAL_PRAISE.fullmatch(message):
+        return "praise"
+    if SOCIAL_THANKS.fullmatch(message):
+        return "thanks"
+    return "other"
+
+
+def feedback_response(message):
+    """Respond to standalone dissatisfaction without claiming learning."""
+    if feedback_intent(message) == "dissatisfaction":
+        return "Thanks for pointing that out. Which part should I correct?"
+    return None
+
+
+def quality_guidance(message):
+    """Advisory model guidance, never a substitute for fact checking."""
+    if feedback_intent(message) == "correction":
+        return ("Use the user's correction for this conversation. Do not claim "
+                "to retrain the model or permanently update memory. "
+                "If unclear, ask one concise question.")
+    return ("Answer the actual question directly. Avoid unsupported certainty, "
+            "especially for technical or security claims. Distinguish established "
+            "facts from potential applications and limitations. Do not repeat "
+            "definitions unnecessarily.")
