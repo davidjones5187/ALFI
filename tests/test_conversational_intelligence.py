@@ -139,3 +139,36 @@ class Increment4FeedbackTests(unittest.TestCase):
         feedback_intent("That's wrong.")
         quality_guidance("Actually, I meant Java.")
         self.assertEqual(history, before)
+
+
+from conversational_intelligence import adaptive_guidance, adaptive_clarification
+
+class Increment5AdaptiveTests(unittest.TestCase):
+    def test_beginner_style(self):
+        self.assertIn("everyday language", adaptive_guidance("Explain quantum computing in simple terms.", []))
+
+    def test_technical_style(self):
+        self.assertIn("technical mechanisms", adaptive_guidance("Give a technical explanation.", []))
+
+    def test_default_accessibility(self):
+        self.assertIn("accessible language", adaptive_guidance("Explain neural networks.", []))
+
+    def test_uncertainty_safeguard(self):
+        self.assertIn("universal speedup", adaptive_guidance("Explain quantum computing.", []))
+
+    def test_missing_referent(self):
+        self.assertEqual(adaptive_clarification("Why is it important?", []), "Which topic are you referring to?")
+
+    def test_context_available(self):
+        history = [{"user": "Explain neural networks.", "assistant": "Networks of nodes."}]
+        self.assertIsNone(adaptive_clarification("Why is it important?", history))
+
+    def test_new_topic_not_intercepted(self):
+        self.assertIsNone(adaptive_clarification("Explain quantum computing.", []))
+
+    def test_no_mutation(self):
+        history = [{"user": "Explain Python.", "assistant": "A language."}]
+        before = [dict(t) for t in history]
+        adaptive_guidance("Explain simply.", history)
+        adaptive_clarification("Why is it important?", history)
+        self.assertEqual(history, before)
