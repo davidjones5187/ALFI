@@ -8,7 +8,7 @@ import urllib.request
 from collections import Counter
 from pathlib import Path
 from memory_intelligence import MemoryStore
-from conversational_intelligence import resolve_followup, response_guidance, natural_acknowledgment, clarification_needed, conversation_guidance, feedback_response, quality_guidance, adaptive_guidance, adaptive_clarification, precision_guidance, length_guidance, increment7_guidance, contextual_subject
+from conversational_intelligence import resolve_followup, response_guidance, natural_acknowledgment, clarification_needed, conversation_guidance, feedback_response, quality_guidance, adaptive_guidance, adaptive_clarification, precision_guidance, length_guidance, increment7_guidance, contextual_subject, response_policy, response_needs_revision
 
 MEMORY_FILE = Path(__file__).with_name("ai_memory.json")
 HISTORY_FILE = Path(__file__).with_name("conversation_history.json")
@@ -195,13 +195,7 @@ class ALFI:
                                          "The current subject is: " + prior +
                                          ". Give a concrete external example, not an account of your own learning."})
                         break
-        messages.append({"role": "system", "content": response_guidance(message, self.recent_history(5))})
-        messages.append({"role": "system", "content": conversation_guidance(message, self.recent_history(5))})
-        messages.append({"role": "system", "content": quality_guidance(message)})
-        messages.append({"role": "system", "content": adaptive_guidance(message, self.recent_history(5))})
-        messages.append({"role": "system", "content": precision_guidance(message, self.recent_history(5))})
-        messages.append({"role": "system", "content": length_guidance(message)})
-        messages.append({"role": "system", "content": increment7_guidance(message, self.recent_history(5))})
+        messages.append({"role": "system", "content": response_policy(message, self.recent_history(5))})
         resolved = resolve_followup(message, self.recent_history(5))
         if not resolved:
             subject = contextual_subject(message, self.recent_history(5))
@@ -218,7 +212,24 @@ class ALFI:
                 result = json.load(response)
             answer = result.get("message", {}).get("content", "")
             if isinstance(answer, str) and answer.strip():
-                return answer.strip()
+                answer = answer.strip()
+                if response_needs_revision(message, answer):
+                    revision_messages = messages + [
+                        {"role": "assistant", "content": answer},
+                        {"role": "user", "content": "Rewrite in at most two short sentences, no list. Preserve factual meaning and caveats."},
+                    ]
+                    retry_payload = json.dumps({"model": OLLAMA_MODEL, "messages": revision_messages, "stream": False}).encode("utf-8")
+                    retry_request = urllib.request.Request(self.ollama_url, data=retry_payload,
+                        headers={"Content-Type": "application/json"}, method="POST")
+                    try:
+                        with urllib.request.urlopen(retry_request, timeout=90) as retry_response:
+                            retry_result = json.load(retry_response)
+                        candidate = retry_result.get("message", {}).get("content", "")
+                        if isinstance(candidate, str) and candidate.strip() and not response_needs_revision(message, candidate):
+                            return candidate.strip()
+                    except (urllib.error.URLError, TimeoutError, OSError, ValueError, KeyError):
+                        pass
+                return answer
             return "The local model returned an empty response. Please try again."
         except (urllib.error.URLError, TimeoutError, OSError, ValueError, KeyError) as exc:
             return ("I couldn't reach my local AI engine. Check that Ollama is running "
