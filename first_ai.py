@@ -8,6 +8,7 @@ from pathlib import Path
 
 MEMORY_FILE = Path(__file__).with_name("ai_memory.json")
 HISTORY_FILE = Path(__file__).with_name("conversation_history.json")
+STOPWORDS = {"a", "an", "the", "is", "are", "what", "who", "how", "why", "does", "do", "you", "your", "me", "my", "of", "to", "about", "tell", "please", "it", "and", "was", "were"}
 DEFAULT_DATA = {
     "greeting": {"examples": ["hello", "hi", "hey", "good morning"], "responses": ["Hello! I'm A.L.F.I."]},
     "identity": {"examples": ["who are you", "what is your name", "tell me your name"], "responses": ["I'm A.L.F.I., Artificial Lifeform — First Iteration."]},
@@ -25,6 +26,7 @@ class ALFI:
         self.data = self.load()
         self.train()
         self.history = self.load_history()
+        self.last_topic = None
 
     def load(self):
         if not self.memory_file.exists():
@@ -96,39 +98,72 @@ class ALFI:
         weights = {k: math.exp(v - peak) for k, v in scores.items()}
         return top, weights[top] / sum(weights.values())
 
+    def find_knowledge(self, message):
+        """Find the most relevant taught example, avoiding low-information matches."""
+        query = set(tokenize(message)) - STOPWORDS
+        if not query:
+            return None
+        best = None
+        best_score = 0.0
+        for topic, entry in self.data.items():
+            for index, example in enumerate(entry["examples"]):
+                terms = set(tokenize(example)) - STOPWORDS
+                overlap = len(query & terms)
+                if not overlap:
+                    continue
+                score = overlap / len(query | terms)
+                # Require substantial shared content; don't guess from one generic word.
+                if score > best_score:
+                    best_score = score
+                    best = (topic, index)
+        return best if best_score >= 0.60 else None
+
+    def topic_details(self, topic):
+        entry = self.data.get(topic, {})
+        responses = list(dict.fromkeys(entry.get("responses", [])))
+        if not responses:
+            return "I don't have additional details about that topic yet."
+        return "Here's what I know about " + topic.replace("_", " ") + ": " + " ".join(responses)
+
     def respond(self, message):
-        # Follow-up references to the last discussed topic.
-        if tokenize(message) in (["tell", "me", "more"], ["more", "about", "that"]):
-            if self.history:
-                return "We were discussing: " + self.history[-1]["user"] + ". What would you like to know?"
-            return "What topic would you like to explore?"
-        # Exact training examples are known, even when a small model assigns
-        # them a low normalized probability.
-        normalized = tokenize(message)
-        for intent, item in self.data.items():
-            if any(tokenize(example) == normalized for example in item["examples"]):
-                responses = item["responses"]
-                return random.choice(responses) if responses else "I recognize the topic but have no reply."
-        intent, confidence = self.classify(message)
-        if intent is None or confidence < 0.42:
-            return "I don't know that yet. Use /teach to help me learn."
-        responses = self.data[intent]["responses"]
-        return random.choice(responses) if responses else "I recognize the topic but have no reply."
+        words = tokenize(message)
+        if words in (["tell", "me", "more"], ["more", "about", "that"], ["what", "else", "do", "you", "know"]):
+            if self.last_topic:
+                return self.topic_details(self.last_topic)
+            return "Please ask about a topic first."
+        # Preserve exact examples and their corresponding responses, not a random
+        # response from the same topic.
+        for topic, entry in self.data.items():
+            for index, example in enumerate(entry["examples"]):
+                if tokenize(example) == words:
+                    self.last_topic = topic
+                    responses = entry["responses"]
+                    if not responses:
+                        return "I recognize that topic but have no answer yet."
+                    return responses[min(index, len(responses) - 1)]
+        match = self.find_knowledge(message)
+        if match:
+            topic, index = match
+            self.last_topic = topic
+            responses = self.data[topic]["responses"]
+            return responses[min(index, len(responses) - 1)] if responses else "I don't have an answer yet."
+        return "I don't know that yet. Use /teach to help me learn."
 
     def teach(self, intent, example, response):
         intent = re.sub(r"[^a-z0-9_-]+", "_", intent.strip().lower()).strip("_")
         if not intent or not example.strip() or not response.strip():
             raise ValueError("Topic, example, and response are required.")
         entry = self.data.setdefault(intent, {"examples": [], "responses": []})
-        if example not in entry["examples"]:
+        if example in entry["examples"]:
+            entry["responses"][entry["examples"].index(example)] = response
+        else:
             entry["examples"].append(example)
-        if response not in entry["responses"]:
             entry["responses"].append(response)
         self.train()
         self.save()
 
 def teaching_mode(ai):
-    print("\\nTEACHING MODE — type /cancel at any prompt to leave.")
+    print("\nTEACHING MODE — type /cancel at any prompt to leave.")
     fields = []
     for prompt in ("Topic", "Example message", "Response"):
         value = input(prompt + ": ").strip()
@@ -139,7 +174,7 @@ def teaching_mode(ai):
             print("Lesson canceled: all fields are required.")
             return
         fields.append(value)
-    print("\\nReview your lesson:")
+    print("\nReview your lesson:")
     for label, value in zip(("Topic", "Example", "Response"), fields):
         print(f"  {label}: {value}")
     confirmation = input("Save lesson? [y/N]: ").strip().lower()
@@ -154,7 +189,7 @@ def teaching_mode(ai):
 
 def main():
     ai = ALFI()
-    print("A.L.F.I. 1.1 | Conversational Intelligence")
+    print("A.L.F.I. 1.2 | Knowledge & Reasoning")
     print("Commands: /teach, /knowledge, /history, /help, /quit")
     while True:
         try:
@@ -168,7 +203,9 @@ def main():
         if command in {"/quit", "quit", "exit"}:
             print("A.L.F.I.: Goodbye!")
             break
-        if command == "/help":
+        if command == "/cancel":
+            print("No teaching session is active. Use /teach to start one.")
+        elif command == "/help":
             print("/teach: reviewed lesson | /knowledge: topics | /history: recent chats | /quit: exit")
         elif command == "/knowledge":
             print("Known topics:", ", ".join(sorted(ai.data)))
