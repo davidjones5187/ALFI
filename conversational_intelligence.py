@@ -282,21 +282,44 @@ def response_policy(message, history):
     else:
         parts.append("Prefer one short paragraph.")
     if CORRECTION.match(message):
-        parts.append("Address ONLY the user's corrected scope; do not restart the earlier explanation or claim memory was saved.")
+        parts.append("Address ONLY the user's corrected scope; do not restart the earlier explanation or claim memory was saved. Answer in 2-4 sentences unless detail requested.")
     elif resolve_followup(message, history) or contextual_subject(message, history):
         parts.append("Build on the established subject without repeating the prior answer.")
     else:
         parts.append("Do not import unrelated topics from history.")
+    if re.search(r"\\b(?:adam|weight updates?|optimizers?)\\b", message, re.I):
+        parts.append("Adam uses bias-corrected first and second gradient moments; never invent its update formula.")
+    if re.search(r"\\bquantum\\b", message, re.I):
+        parts.append("Avoid broad unverified quantum speedup claims for unconstrained, linear, quadratic or semidefinite optimization.")
     parts.append(precision_guidance(message, history))
     return " ".join(parts)
 
 
 def response_needs_revision(message, answer):
-    """Flag length violations; never truncate facts or rewrite user data."""
-    if not BRIEF.search(message) or not isinstance(answer, str):
+    """Flag overly long answers without truncating content."""
+    if not isinstance(answer, str) or not answer.strip():
+        return False
+    if (DETAIL.search(message) or TECHNICAL.search(message)) and not BRIEF.search(message):
         return False
     text = answer.strip()
-    if not text:
-        return False
-    sentences = re.split(r"(?<=[.!?])\s+", text)
-    return len(sentences) > 2 or len(text.split()) > 65 or bool(re.search(r"(?m)^\s*(?:[-*] |\d+[.)] )", text))
+    words = len(text.split())
+    sentences = re.split(r"(?<=[.!?])\\s+", text)
+    items = len(re.findall(r"(?m)^\\s*(?:[-*] |\\d+[.)] )", text))
+    if BRIEF.search(message):
+        return len(sentences) > 2 or words > 65 or items > 0
+    if CORRECTION.match(message):
+        return words > 105 or items > 2
+    return words > 180 or items > 6
+
+
+def factual_revision_guidance(message, answer):
+    """Flag narrow, recognizable factual errors; not a general fact checker."""
+    if not isinstance(answer, str):
+        return ""
+    if re.search(r"\\b(?:adam|weight updates?|optimizers?)\\b", message, re.I):
+        if "∂L/∂w^2" in answer:
+            return "Replace the incorrect Adam formula with bias-corrected first/second moments."
+    if re.search(r"\\bquantum\\b", message, re.I):
+        if re.search(r"quantum computers? can (?:solve|speed up).*?(?:unconstrained|linear|quadratic|semidefinite)", answer, re.I | re.S):
+            return "Remove unsupported category-wide quantum speedup claims."
+    return ""
