@@ -252,3 +252,38 @@ class Increment7ResponseControlTests(unittest.TestCase):
 
     def test_no_context(self):
         self.assertIn("Answer the question first", increment7_guidance("What is a qubit?", []))
+
+from conversational_intelligence import response_policy, response_needs_revision
+
+class Increment8PolicyTests(unittest.TestCase):
+    def test_brevity_priority(self):
+        self.assertIn("STRICT LENGTH", response_policy("Explain briefly with technical detail.", []))
+
+    def test_correction_scope(self):
+        self.assertIn("ONLY", response_policy("Actually, I meant quantum computers.", []))
+
+    def test_new_topic_separation(self):
+        history = [{"user": "Explain Python.", "assistant": "A language."}]
+        self.assertIn("unrelated topics", response_policy("Explain chemistry.", history))
+
+    def test_followup_continuity(self):
+        history = [{"user": "Explain neural networks.", "assistant": "They learn patterns."}]
+        self.assertIn("without repeating", response_policy("Tell me more.", history))
+
+    def test_long_brief_answer_flagged(self):
+        self.assertTrue(response_needs_revision("Explain briefly.", "One. Two. Three."))
+
+    def test_list_flagged(self):
+        self.assertTrue(response_needs_revision("Explain briefly.", "1. First\\n2. Second"))
+
+    def test_short_answer_preserved(self):
+        self.assertFalse(response_needs_revision("Explain briefly.", "A qubit is a quantum information unit."))
+
+    def test_detail_not_constrained(self):
+        self.assertFalse(response_needs_revision("Explain in detail.", "One. Two. Three."))
+
+    def test_history_immutable(self):
+        history = [{"user": "Explain Python."}]
+        before = [dict(item) for item in history]
+        response_policy("Tell me more.", history)
+        self.assertEqual(history, before)
