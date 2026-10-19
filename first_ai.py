@@ -132,6 +132,16 @@ class ALFI:
             return "I don't have additional details about that topic yet."
         return "Here's what I know about " + topic.replace("_", " ") + ": " + " ".join(responses)
 
+    def memory_explanation(self):
+        return ("No. Chatting does not retrain my model or permanently teach me new facts. "
+                "Conversations may be saved locally in conversation_history.json and reused "
+                "as context. Only /teach saves lessons in ai_memory.json. "
+                "Use /clearhistory to erase local chat history.")
+
+    def is_memory_question(self, message):
+        words = set(tokenize(message))
+        return bool(words & {"you", "your"}) and bool(words & {"learn", "learned", "remember"}) and bool(words & {"permanently", "permanent", "conversation", "new"})
+
     def generate(self, message):
         """Ask the local Ollama model without automatically teaching the answer."""
         if not self.use_ollama:
@@ -169,6 +179,8 @@ class ALFI:
                     "and llama3.2:3b is installed. Details: " + str(exc))
 
     def respond(self, message):
+        if self.is_memory_question(message):
+            return self.memory_explanation()
         words = tokenize(message)
         if words in (["tell", "me", "more"], ["more", "about", "that"], ["what", "else", "do", "you", "know"]):
             if self.last_source == "taught" and self.last_topic:
@@ -261,7 +273,7 @@ def teaching_mode(ai):
 
 def main():
     ai = ALFI()
-    print("A.L.F.I. 1.4 | Context & Memory Management")
+    print("A.L.F.I. 1.4.1 | Context Accuracy Patch")
     print("Commands: /teach, /knowledge, /forget, /history, /clearhistory, /help, /quit")
     while True:
         try:
