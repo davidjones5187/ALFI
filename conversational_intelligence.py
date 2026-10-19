@@ -244,7 +244,7 @@ def length_guidance(message):
 
 
 # Increment 7: response control is advisory and never changes stored memory.
-REPHRASE = re.compile(r"^(?:actually\\b|i meant\\b|no,? i meant\\b|what i meant was\\b)", re.I)
+REPHRASE = re.compile(r"^(?:actually\b|i meant\b|no,? i meant\b|what i meant was\b)", re.I)
 
 def increment7_guidance(message, history):
     """Prioritize explicit brevity, avoid redundant corrections, and qualify claims."""
