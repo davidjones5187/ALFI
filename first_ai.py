@@ -77,6 +77,13 @@ class ALFI:
         return top, weights[top] / sum(weights.values())
 
     def respond(self, message):
+        # Exact training examples are known, even when a small model assigns
+        # them a low normalized probability.
+        normalized = tokenize(message)
+        for intent, item in self.data.items():
+            if any(tokenize(example) == normalized for example in item["examples"]):
+                responses = item["responses"]
+                return random.choice(responses) if responses else "I recognize the topic but have no reply."
         intent, confidence = self.classify(message)
         if intent is None or confidence < 0.42:
             return "I don't know that yet. Use /teach to help me learn."
