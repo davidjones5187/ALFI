@@ -107,3 +107,15 @@ Run a **fresh process/session**, without deleting or resetting persistent memory
 5. "A cup of hot tea is left on a table. What will happen to its temperature as time passes?" (everyday physical reasoning; cools toward ambient temperature)
 
 Score each 0–2 using the existing rubric (maximum 10). Preserve exact answers and the session metadata. This is a **restart-session diagnostic**, not an independent clean-memory trial; persistent memory may still influence answers. Compare results to the previous session without merging the new score into a claim of formal stage promotion. Stage 3 remains under assessment; Increment 8 open, Increment 9 on hold. Do not change application code, model, or stable main.
+
+## Stage 3 restart diagnostic — observed results (2026-10-19)
+
+User restarted with `python3 first_ai.py`; banner `A.L.F.I. 1.6-dev | Conversational Intelligence`. The five prescribed questions were asked in order without recorded intervening feedback:
+
+1. Six pencils, give two away: "You still have six pencils. The transfer of pencils to your friend did not change the number of pencils you possess." **0/2** (incorrect; four remain).
+2. 12-inch versus 8-inch ruler: "The 12-inch ruler is longer than the 8-inch ruler." **2/2**.
+3. Glass falls and breaks: "The most likely cause of the glass breaking is the impact of the fall, which subjected the glass to a sudden and significant force that exceeded its structural integrity." **2/2**.
+4. Three red and three blue marbles: "You have six marbles in total, as each color (red and blue) has an equal number (three) and they are combined." **2/2**.
+5. Hot tea left on table: "The tea's temperature will decrease over time, as heat is transferred to the surrounding environment (the table and air) through conduction and convection, causing the tea to lose heat and eventually cool down." **2/2**.
+
+**Fresh-session score: 8/10 (80%).** Prior diagnostic: 9/14 (64.3%). These are different test sets and not evidence of learning or a longitudinal score improvement. Stage 3 remains under assessment; one session at threshold does not satisfy three-session/novel-variant requirements. Failure may concern action/possession semantics, arithmetic application, or answer generation; do not assign a cause without discriminating probes. Next uncoached basic probe: "You have six pencils. You put two pencils in a drawer. How many pencils are still in your hand?" Expected four, assuming all six began in hand; if the user has not specified that, wording should be clarified to "You are holding six pencils. You put two in a drawer. How many are still in your hand?" No code/model changes; Increment 8 open, Increment 9 on hold.
