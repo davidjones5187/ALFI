@@ -137,6 +137,35 @@ class ALFI:
             return "I don't have additional details about that topic yet."
         return "Here's what I know about " + topic.replace("_", " ") + ": " + " ".join(responses)
 
+    def history_question_answer(self, message):
+        """Answer explicit requests to recall user questions from recorded history.
+
+        Never substitute a matching saved fact or invent an earlier conversation.
+        """
+        prompt = message.strip().lower()
+        immediate = re.match(r"^what did i just ask you(?: to do)?(?: about .+)?[?.!]*$", prompt)
+        older = re.match(r"^what did i ask you about (.+?) in (?:our |the )?earlier conversation[?.!]*$", prompt)
+        if not (immediate or older):
+            return None
+        if immediate:
+            for turn in reversed(self.history):
+                if isinstance(turn, dict) and isinstance(turn.get("user"), str):
+                    prior = turn["user"].strip()
+                    if prior and not prior.startswith("/"):
+                        return f"You asked me: {prior}"
+            return "I can't find a preceding question in my saved conversation history."
+        subject = older.group(1).strip().strip("?.! ")
+        terms = set(tokenize(subject)) - STOPWORDS
+        if not terms:
+            return "I can't identify which earlier question you mean."
+        for turn in reversed(self.history):
+            if not isinstance(turn, dict) or not isinstance(turn.get("user"), str):
+                continue
+            prior = turn["user"].strip()
+            if prior and not prior.startswith("/") and terms <= set(tokenize(prior)):
+                return f"Your recorded earlier question was: {prior}"
+        return "I can't find a matching earlier question in my saved conversation history."
+
     def direct_memory_answer(self, message):
         """Answer explicit saved-fact questions without model speculation."""
         query = set(tokenize(message)) - STOPWORDS
@@ -254,6 +283,9 @@ class ALFI:
             return social
         if self.is_memory_question(message):
             return self.memory_explanation()
+        historical = self.history_question_answer(message)
+        if historical is not None:
+            return historical
         direct = self.direct_memory_answer(message)
         if direct is not None:
             return direct
