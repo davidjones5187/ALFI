@@ -56,3 +56,16 @@ def response_guidance(message, history):
                       "a different subject, answer that subject without dragging in "
                       "the previous topic. Do not erase history.")
     return depth + " " + continuity
+
+# Small, deterministic social acknowledgments. No memory writes or model claims.
+SOCIAL_THANKS = re.compile(r"^(?:thanks(?: a lot)?|thank you(?: very much)?|appreciate it)[.! ]*$", re.I)
+SOCIAL_PRAISE = re.compile(r"^(?:great job|good job|well done|nice work|that's helpful|that was helpful|you did great)[.! ]*$", re.I)
+
+def natural_acknowledgment(message):
+    """Handle clear social feedback without invoking a lengthy explanation."""
+    message = message.strip()
+    if SOCIAL_THANKS.fullmatch(message):
+        return "You're welcome!"
+    if SOCIAL_PRAISE.fullmatch(message):
+        return "Thanks! Glad that helped."
+    return None
