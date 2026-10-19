@@ -84,3 +84,12 @@ Never train directly on the exact held-out assessment prompts. Preserve both suc
 ## Next review deliverable
 
 A scorecard with per-prompt evidence, stage-specific pass/partial/fail, retention marked tested/not tested, identified capability bottlenecks, and a recommendation to advance, reinforce, or investigate architecture. Do not call a stage passed based only on mocked automated tests.
+
+## Foundational-first assessment policy (2026-10-19)
+
+- Keep all new assessment questions at an everyday foundational level until evidence supports increasing difficulty. Use one concept per question, plain language, and minimal jargon.
+- Before instruction or correction, run an **uncoached probe** using a new example. Do not reveal the expected answer to A.L.F.I. until its first response has been recorded.
+- After a failure, test one comparable novel variant before deciding whether it is an isolated error or a repeated pattern. Then teach the general principle and test transfer with another novel example.
+- Score observed answers, not presumed internal reasoning or learning. Record whether a response came before or after instruction and whether prior conversation/history may have primed it.
+- Current Stage 3 follow-up probe: **"Which is heavier: 10 kilograms of cotton or 10 kilograms of steel?"** Expected: equal gravitational weight under the same conditions. Do not coach first.
+- Current observations: Stage 1 6/6 initial, Stage 2 8/8 initial, Stage 3 4/6 initial (the 1 kg feathers/rocks comparison failed). All stages remain provisional until multi-session requirements are met.
