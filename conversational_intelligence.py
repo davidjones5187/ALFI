@@ -73,7 +73,7 @@ def natural_acknowledgment(message):
 
 # Phase 2: conservative intent detection and conversational safeguards.
 CORRECTION = re.compile(
-    r"^(?:actually\\b|correction:|i meant\\b|what i meant was\\b|no,? i meant\\b)",
+    r"^(?:actually\b|correction:|i meant\b|what i meant was\b|no,? i meant\b)",
     re.I,
 )
 ACKNOWLEDGMENT = re.compile(
