@@ -1,6 +1,6 @@
 """Regression tests for A.L.F.I. 1.6 follow-up resolution."""
 import unittest
-from conversational_intelligence import resolve_followup, response_guidance, natural_acknowledgment, conversational_intent, clarification_needed, conversation_guidance
+from conversational_intelligence import resolve_followup, response_guidance, natural_acknowledgment, conversational_intent, clarification_needed, conversation_guidance, feedback_intent, feedback_response, quality_guidance
 
 class ConversationalIntelligenceTests(unittest.TestCase):
     def test_example_retains_subject(self):
@@ -107,4 +107,35 @@ class Phase2Tests(unittest.TestCase):
         history = [{"user": "Explain Python."}]
         before = [dict(t) for t in history]
         conversation_guidance("Tell me more.", history)
+        self.assertEqual(history, before)
+
+class Increment4FeedbackTests(unittest.TestCase):
+    def test_praise(self):
+        self.assertEqual(feedback_intent("Great job!"), "praise")
+
+    def test_dissatisfaction(self):
+        self.assertEqual(feedback_intent("That's not right."), "dissatisfaction")
+        self.assertIn("Which part", feedback_response("That's not right."))
+
+    def test_correction(self):
+        self.assertEqual(feedback_intent("Actually, I meant Python."), "correction")
+
+    def test_no_substantive_interception(self):
+        self.assertEqual(feedback_intent("Why is this wrong?"), "other")
+        self.assertIsNone(feedback_response("Explain quantum computing."))
+
+    def test_commands_unaffected(self):
+        self.assertEqual(feedback_intent("/correct"), "other")
+
+    def test_no_memory_claim(self):
+        self.assertIn("Do not claim", quality_guidance("Actually, I meant Java."))
+
+    def test_technical_qualification(self):
+        self.assertIn("unsupported certainty", quality_guidance("Explain quantum encryption."))
+
+    def test_feedback_does_not_mutate_history(self):
+        history = [{"user": "Explain Python.", "assistant": "A language."}]
+        before = [dict(t) for t in history]
+        feedback_intent("That's wrong.")
+        quality_guidance("Actually, I meant Java.")
         self.assertEqual(history, before)
