@@ -143,7 +143,7 @@ class ALFI:
         Never substitute a matching saved fact or invent an earlier conversation.
         """
         prompt = message.strip().lower()
-        immediate = re.match(r"^what did i just ask you(?: to do)?(?: about .+)?[?.!]*$", prompt)
+        immediate = re.match(r"^what did i just ask you(?: to do)?(?: (?:about|with|regarding) .+)?[?.!]*$", prompt)
         older = re.match(r"^what did i ask you about (.+?) in (?:our |the )?earlier conversation[?.!]*$", prompt)
         if not (immediate or older):
             return None
