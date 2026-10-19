@@ -8,7 +8,7 @@ import urllib.request
 from collections import Counter
 from pathlib import Path
 from memory_intelligence import MemoryStore
-from conversational_intelligence import resolve_followup, response_guidance, natural_acknowledgment
+from conversational_intelligence import resolve_followup, response_guidance, natural_acknowledgment, clarification_needed, conversation_guidance
 
 MEMORY_FILE = Path(__file__).with_name("ai_memory.json")
 HISTORY_FILE = Path(__file__).with_name("conversation_history.json")
@@ -196,6 +196,7 @@ class ALFI:
                                          ". Give a concrete external example, not an account of your own learning."})
                         break
         messages.append({"role": "system", "content": response_guidance(message, self.recent_history(5))})
+        messages.append({"role": "system", "content": conversation_guidance(message, self.recent_history(5))})
         resolved = resolve_followup(message, self.recent_history(5))
         messages.append({"role": "user", "content": resolved or message})
         payload = json.dumps({"model": OLLAMA_MODEL, "messages": messages,
@@ -215,6 +216,9 @@ class ALFI:
                     "and llama3.2:3b is installed. Details: " + str(exc))
 
     def respond(self, message):
+        clarification = clarification_needed(message, self.recent_history(5))
+        if clarification:
+            return clarification
         social = natural_acknowledgment(message)
         if social is not None:
             return social
