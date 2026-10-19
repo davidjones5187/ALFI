@@ -33,6 +33,7 @@ class ALFI:
         self.train()
         self.history = self.load_history()
         self.last_topic = None
+        self.last_source = None
 
     def load(self):
         if not self.memory_file.exists():
@@ -139,7 +140,10 @@ class ALFI:
             "You are A.L.F.I. (Artificial Lifeform — First Iteration), "
             "a helpful local AI assistant. Be concise, accurate, and acknowledge uncertainty. "
             "You are a language model, not a conscious lifeform. "
-            "Do not claim to save knowledge unless the user explicitly teaches you."
+            "Your model weights do not change during chat. Conversation history is temporary context, "
+            "and only /teach saves permanent lessons. Never invent past interactions or "
+            "claim to have learned or updated knowledge from ordinary conversation. "
+            "When asked for an example, address the most recent subject directly."
         )}]
         for turn in self.recent_history(5):
             if isinstance(turn, dict):
@@ -167,8 +171,10 @@ class ALFI:
     def respond(self, message):
         words = tokenize(message)
         if words in (["tell", "me", "more"], ["more", "about", "that"], ["what", "else", "do", "you", "know"]):
-            if self.last_topic:
+            if self.last_source == "taught" and self.last_topic:
                 return self.topic_details(self.last_topic)
+            if self.history:
+                return self.generate(message)
             return "Please ask about a topic first."
         # Preserve exact examples and their corresponding responses, not a random
         # response from the same topic.
@@ -176,6 +182,7 @@ class ALFI:
             for index, example in enumerate(entry["examples"]):
                 if tokenize(example) == words:
                     self.last_topic = topic
+                    self.last_source = "taught"
                     responses = entry["responses"]
                     if not responses:
                         return "I recognize that topic but have no answer yet."
@@ -184,9 +191,35 @@ class ALFI:
         if match:
             topic, index = match
             self.last_topic = topic
+            self.last_source = "taught"
             responses = self.data[topic]["responses"]
             return responses[min(index, len(responses) - 1)] if responses else "I don't have an answer yet."
+        self.last_topic = None
+        self.last_source = "generated"
         return self.generate(message)
+
+    def forget_topic(self, topic):
+        """Delete a taught topic, leaving conversation history untouched."""
+        key = re.sub(r"[^a-z0-9_-]+", "_", topic.strip().lower()).strip("_")
+        if key not in self.data:
+            return False
+        del self.data[key]
+        self.train()
+        self.save()
+        if self.last_topic == key:
+            self.last_topic = None
+            self.last_source = None
+        return True
+
+    def clear_history(self):
+        """Erase on-disk conversation history and current conversational context."""
+        self.history = []
+        self.last_topic = None
+        self.last_source = None
+        try:
+            HISTORY_FILE.unlink(missing_ok=True)
+        except OSError as exc:
+            print(f"Warning: history could not be deleted: {exc}")
 
     def teach(self, intent, example, response):
         intent = re.sub(r"[^a-z0-9_-]+", "_", intent.strip().lower()).strip("_")
@@ -228,8 +261,8 @@ def teaching_mode(ai):
 
 def main():
     ai = ALFI()
-    print("A.L.F.I. 1.3 | Generative Intelligence")
-    print("Commands: /teach, /knowledge, /history, /help, /quit")
+    print("A.L.F.I. 1.4 | Context & Memory Management")
+    print("Commands: /teach, /knowledge, /forget, /history, /clearhistory, /help, /quit")
     while True:
         try:
             message = input("You: ").strip()
@@ -245,7 +278,19 @@ def main():
         if command == "/cancel":
             print("No teaching session is active. Use /teach to start one.")
         elif command == "/help":
-            print("/teach: reviewed lesson | /knowledge: topics | /history: recent chats | /quit: exit")
+            print("/teach: save lesson | /knowledge: topics | /forget: remove a topic | /history: recent chats | /clearhistory: erase chats | /quit: exit")
+        elif command == "/forget":
+            topic = input("Topic to forget: ").strip()
+            if topic and input(f"Delete taught topic {topic!r}? [y/N]: ").strip().lower() in ("y", "yes"):
+                print("Topic removed." if ai.forget_topic(topic) else "Topic not found.")
+            else:
+                print("Canceled.")
+        elif command == "/clearhistory":
+            if input("Permanently erase local conversation history? [y/N]: ").strip().lower() in ("y", "yes"):
+                ai.clear_history()
+                print("Conversation history cleared.")
+            else:
+                print("Canceled.")
         elif command == "/knowledge":
             print("Known topics:", ", ".join(sorted(ai.data)))
         elif command == "/history":
