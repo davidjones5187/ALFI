@@ -1,4 +1,8 @@
 import tempfile
+import io
+import json
+import urllib.error
+from unittest.mock import patch
 import unittest
 from pathlib import Path
 from first_ai import ALFI
@@ -47,6 +51,34 @@ class TestALFI(unittest.TestCase):
             ai.teach("creator", "who created you", "Original")
             ai.teach("creator", "who created you", "Updated")
             self.assertEqual(ai.respond("who created you"), "Updated")
+
+    def test_local_model_generates_unknown_answer(self):
+        with tempfile.TemporaryDirectory() as folder:
+            ai = ALFI(Path(folder) / "memory.json")
+            fake = io.BytesIO(json.dumps({"message": {"content": "A generated answer."}}).encode())
+            with patch("first_ai.urllib.request.urlopen", return_value=fake) as mocked:
+                self.assertEqual(ai.respond("explain quantum gravity"), "A generated answer.")
+                request = mocked.call_args.args[0]
+                self.assertEqual(json.loads(request.data)["model"], "llama3.2:3b")
+
+    def test_taught_knowledge_skips_model(self):
+        with tempfile.TemporaryDirectory() as folder:
+            ai = ALFI(Path(folder) / "memory.json")
+            ai.teach("project", "what is project inception?", "Phase One.")
+            with patch("first_ai.urllib.request.urlopen") as mocked:
+                self.assertEqual(ai.respond("what is project inception?"), "Phase One.")
+                mocked.assert_not_called()
+
+    def test_model_unavailable_graceful(self):
+        with tempfile.TemporaryDirectory() as folder:
+            ai = ALFI(Path(folder) / "memory.json")
+            with patch("first_ai.urllib.request.urlopen", side_effect=urllib.error.URLError("offline")):
+                self.assertIn("couldn't reach", ai.respond("explain quantum gravity"))
+
+    def test_disable_model(self):
+        with tempfile.TemporaryDirectory() as folder:
+            ai = ALFI(Path(folder) / "memory.json", use_ollama=False)
+            self.assertIn("don't know", ai.respond("explain quantum gravity"))
 
     def test_learning_persists(self):
         with tempfile.TemporaryDirectory() as folder:
