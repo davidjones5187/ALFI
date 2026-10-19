@@ -274,7 +274,7 @@ class Increment8PolicyTests(unittest.TestCase):
         self.assertTrue(response_needs_revision("Explain briefly.", "One. Two. Three."))
 
     def test_list_flagged(self):
-        self.assertTrue(response_needs_revision("Explain briefly.", "1. First\\n2. Second"))
+        self.assertTrue(response_needs_revision("Explain briefly.", "1. First\n2. Second"))
 
     def test_short_answer_preserved(self):
         self.assertFalse(response_needs_revision("Explain briefly.", "A qubit is a quantum information unit."))
