@@ -211,3 +211,41 @@ class ModelSelectionTests(unittest.TestCase):
                 ai.generate("Explain photosynthesis.")
             self.assertEqual(call.call_count, 2)
             self.assertTrue(all(json.loads(x.args[0].data)["model"] == "llama3.2:3b" for x in call.call_args_list))
+
+class HistoryGroundingRegressionTests(unittest.TestCase):
+    def test_immediate_recall_not_hijacked_by_saved_fact(self):
+        with tempfile.TemporaryDirectory() as folder:
+            ai = ALFI(Path(folder) / "memory.json", use_ollama=False)
+            ai.structured_memory.put("fact", "test lantern color", "amber")
+            ai.history = [{"user": "Tell me my saved test lantern color in a short sentence.",
+                           "assistant": "Your lantern is amber."}]
+            answer = ai.respond("What did I just ask you to do with my saved test lantern color?")
+            self.assertIn("Tell me my saved test lantern color", answer)
+            self.assertNotIn("Your saved test lantern color is:", answer)
+
+    def test_older_question_grounded_in_recorded_history(self):
+        with tempfile.TemporaryDirectory() as folder:
+            ai = ALFI(Path(folder) / "memory.json", use_ollama=False)
+            ai.history = [{"user": "If I leave a book on a table, where will it be?",
+                           "assistant": "On the table."}]
+            answer = ai.respond("What did I ask you about the book in our earlier conversation?")
+            self.assertIn("leave a book on a table", answer)
+
+    def test_missing_history_does_not_invent_book(self):
+        with tempfile.TemporaryDirectory() as folder:
+            ai = ALFI(Path(folder) / "memory.json", use_ollama=False)
+            ai.history = [{"user": "How are clouds formed?", "assistant": "Condensation."}]
+            answer = ai.respond("What did I ask you about the book in our earlier conversation?")
+            self.assertIn("can't find", answer)
+            self.assertNotIn("Martian", answer)
+
+    def test_saved_fact_direct_answer_still_works(self):
+        with tempfile.TemporaryDirectory() as folder:
+            ai = ALFI(Path(folder) / "memory.json", use_ollama=False)
+            ai.structured_memory.put("fact", "test lantern color", "amber")
+            self.assertIn("amber", ai.respond("What is my test lantern color?"))
+
+    def test_ordinary_questions_not_intercepted(self):
+        with tempfile.TemporaryDirectory() as folder:
+            ai = ALFI(Path(folder) / "memory.json", use_ollama=False)
+            self.assertIsNone(ai.history_question_answer("What is a book?"))
