@@ -3,11 +3,15 @@ import json
 import math
 import random
 import re
+import urllib.error
+import urllib.request
 from collections import Counter
 from pathlib import Path
 
 MEMORY_FILE = Path(__file__).with_name("ai_memory.json")
 HISTORY_FILE = Path(__file__).with_name("conversation_history.json")
+OLLAMA_URL = "http://127.0.0.1:11434/api/chat"
+OLLAMA_MODEL = "llama3.2:3b"
 STOPWORDS = {"a", "an", "the", "is", "are", "what", "who", "how", "why", "does", "do", "you", "your", "me", "my", "of", "to", "about", "tell", "please", "it", "and", "was", "were"}
 DEFAULT_DATA = {
     "greeting": {"examples": ["hello", "hi", "hey", "good morning"], "responses": ["Hello! I'm A.L.F.I."]},
@@ -21,8 +25,10 @@ def tokenize(text):
     return re.findall(r"[a-z0-9']+", text.lower())
 
 class ALFI:
-    def __init__(self, memory_file=MEMORY_FILE):
+    def __init__(self, memory_file=MEMORY_FILE, use_ollama=True, ollama_url=OLLAMA_URL):
         self.memory_file = Path(memory_file)
+        self.use_ollama = use_ollama
+        self.ollama_url = ollama_url
         self.data = self.load()
         self.train()
         self.history = self.load_history()
@@ -125,6 +131,39 @@ class ALFI:
             return "I don't have additional details about that topic yet."
         return "Here's what I know about " + topic.replace("_", " ") + ": " + " ".join(responses)
 
+    def generate(self, message):
+        """Ask the local Ollama model without automatically teaching the answer."""
+        if not self.use_ollama:
+            return "I don't know that yet. Use /teach to help me learn."
+        messages = [{"role": "system", "content": (
+            "You are A.L.F.I. (Artificial Lifeform — First Iteration), "
+            "a helpful local AI assistant. Be concise, accurate, and acknowledge uncertainty. "
+            "You are a language model, not a conscious lifeform. "
+            "Do not claim to save knowledge unless the user explicitly teaches you."
+        )}]
+        for turn in self.recent_history(5):
+            if isinstance(turn, dict):
+                user, answer = turn.get("user"), turn.get("assistant")
+                if isinstance(user, str) and isinstance(answer, str):
+                    messages.extend([{"role": "user", "content": user},
+                                     {"role": "assistant", "content": answer}])
+        messages.append({"role": "user", "content": message})
+        payload = json.dumps({"model": OLLAMA_MODEL, "messages": messages,
+                              "stream": False}).encode("utf-8")
+        request = urllib.request.Request(
+            self.ollama_url, data=payload,
+            headers={"Content-Type": "application/json"}, method="POST")
+        try:
+            with urllib.request.urlopen(request, timeout=90) as response:
+                result = json.load(response)
+            answer = result.get("message", {}).get("content", "")
+            if isinstance(answer, str) and answer.strip():
+                return answer.strip()
+            return "The local model returned an empty response. Please try again."
+        except (urllib.error.URLError, TimeoutError, OSError, ValueError, KeyError) as exc:
+            return ("I couldn't reach my local AI engine. Check that Ollama is running "
+                    "and llama3.2:3b is installed. Details: " + str(exc))
+
     def respond(self, message):
         words = tokenize(message)
         if words in (["tell", "me", "more"], ["more", "about", "that"], ["what", "else", "do", "you", "know"]):
@@ -147,7 +186,7 @@ class ALFI:
             self.last_topic = topic
             responses = self.data[topic]["responses"]
             return responses[min(index, len(responses) - 1)] if responses else "I don't have an answer yet."
-        return "I don't know that yet. Use /teach to help me learn."
+        return self.generate(message)
 
     def teach(self, intent, example, response):
         intent = re.sub(r"[^a-z0-9_-]+", "_", intent.strip().lower()).strip("_")
@@ -189,7 +228,7 @@ def teaching_mode(ai):
 
 def main():
     ai = ALFI()
-    print("A.L.F.I. 1.2 | Knowledge & Reasoning")
+    print("A.L.F.I. 1.3 | Generative Intelligence")
     print("Commands: /teach, /knowledge, /history, /help, /quit")
     while True:
         try:
