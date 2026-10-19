@@ -93,3 +93,17 @@ A scorecard with per-prompt evidence, stage-specific pass/partial/fail, retentio
 - Score observed answers, not presumed internal reasoning or learning. Record whether a response came before or after instruction and whether prior conversation/history may have primed it.
 - Current Stage 3 follow-up probe: **"Which is heavier: 10 kilograms of cotton or 10 kilograms of steel?"** Expected: equal gravitational weight under the same conditions. Do not coach first.
 - Current observations: Stage 1 6/6 initial, Stage 2 8/8 initial, Stage 3 4/6 initial (the 1 kg feathers/rocks comparison failed). All stages remain provisional until multi-session requirements are met.
+
+## Stage 3 restart diagnostic — everyday reasoning (2026-10-19)
+
+The initial Stage 3 sequence is closed for analysis, not declared passed. Seven observed trials: five-apples subtraction (2/2); ice melting (2/2); 1 kg feathers versus rocks (0/2); 10 kg cotton versus steel (0/2); define weight (1/2); equal masses and gravitational force (2/2); two 5 kg boxes (2/2). **Total 9/14 (64.3%)**. Correct answers after multiple weight-related questions may reflect conversational priming; no retention or independent learning is established.
+
+Run a **fresh process/session**, without deleting or resetting persistent memory. Keep the current branch and model fixed; note the restart and existing memory state. Ask the following exact five questions in order without coaching, corrections, or feedback between them:
+
+1. "You have six pencils and give two to a friend. How many pencils do you have left?" (subtraction; four)
+2. "Which is longer: a 12-inch ruler or an 8-inch ruler?" (comparison; 12-inch ruler)
+3. "A glass falls off a table and breaks. What most likely caused it to break?" (cause/effect; impact when it hit the floor)
+4. "You have three red marbles and three blue marbles. How many marbles do you have altogether?" (addition; six)
+5. "A cup of hot tea is left on a table. What will happen to its temperature as time passes?" (everyday physical reasoning; cools toward ambient temperature)
+
+Score each 0–2 using the existing rubric (maximum 10). Preserve exact answers and the session metadata. This is a **restart-session diagnostic**, not an independent clean-memory trial; persistent memory may still influence answers. Compare results to the previous session without merging the new score into a claim of formal stage promotion. Stage 3 remains under assessment; Increment 8 open, Increment 9 on hold. Do not change application code, model, or stable main.
