@@ -193,3 +193,51 @@ def adaptive_clarification(message, history):
             if prior and not COMMAND.match(prior) and not FOLLOWUP.fullmatch(prior):
                 return None
     return "Which topic are you referring to?"
+
+
+# Increment 6: bounded referent and precision guidance. Advisory only.
+IMPORTANCE = re.compile(r"^why (?:is|are|was|were) (?:it|that|this|they) important[?.! ]*$", re.I)
+QUANTUM = re.compile(r"\\bquantum (?:comput(?:ing|ers?)|algorithm|advantage|optimization)\\b", re.I)
+
+def contextual_subject(message, history, max_turns=5):
+    """Find the last explicit subject, never use assistant text as user intent."""
+    if not IMPORTANCE.fullmatch(message.strip()):
+        return None
+    for turn in reversed(history[-max_turns:]):
+        if not isinstance(turn, dict):
+            continue
+        prior = turn.get("user")
+        if not isinstance(prior, str):
+            continue
+        prior = prior.strip()
+        if (not prior or COMMAND.match(prior) or FOLLOWUP.fullmatch(prior)
+                or IMPORTANCE.fullmatch(prior) or CORRECTION.match(prior)):
+            continue
+        if re.match(r"^(?:explain|describe|what is|what are|tell me about)\\b", prior, re.I):
+            return prior
+    return None
+
+def precision_guidance(message, history):
+    """Provide model instructions without making factual verification claims."""
+    subject = contextual_subject(message, history)
+    if subject:
+        return ("The user asks why the preceding SUBJECT matters, not whether your "
+                "previous answer was too long. Explain the significance and a concrete "
+                "application directly. The subject is: " + subject)
+    if IMPORTANCE.fullmatch(message.strip()):
+        return "The referent is unknown. Ask which subject the user means."
+    if QUANTUM.search(message):
+        return ("Quantum speedups are algorithm- and task-specific; do not imply "
+                "universal advantage or established practical speedups for general "
+                "optimization or machine learning. Qualify unverified benchmarks.")
+    return ("Use precise technical terminology. Do not generalize a specialized "
+            "training objective, such as reconstruction loss, to all neural networks.")
+
+def length_guidance(message):
+    """Explicit user brevity takes precedence over technical complexity."""
+    if BRIEF.search(message):
+        return "HARD STYLE REQUEST: answer in at most two short sentences; no list."
+    if DETAIL.search(message) or TECHNICAL.search(message):
+        return ("Explain mechanisms accurately with a compact structure. "
+                "Avoid exhaustive lists unless explicitly requested.")
+    return "Answer directly, preferably in a short paragraph."
