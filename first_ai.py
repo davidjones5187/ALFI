@@ -163,7 +163,7 @@ class ALFI:
                 continue
             prior = turn["user"].strip()
             if (prior and not prior.startswith("/")
-                    and not re.match(r"^what did i (?:just )?ask you\\b", prior, re.I)
+                    and not re.match(r"^what did i (?:just )?ask you\b", prior, re.I)
                     and terms <= set(tokenize(prior))):
                 return f"Your recorded earlier question was: {prior}"
         return "I can't find a matching earlier question in my saved conversation history."
