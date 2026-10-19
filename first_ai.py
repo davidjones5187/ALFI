@@ -9,7 +9,7 @@ import urllib.request
 from collections import Counter
 from pathlib import Path
 from memory_intelligence import MemoryStore
-from conversational_intelligence import resolve_followup, response_guidance, natural_acknowledgment, clarification_needed, conversation_guidance, feedback_response, quality_guidance, adaptive_guidance, adaptive_clarification, precision_guidance, length_guidance, increment7_guidance, contextual_subject, response_policy, response_needs_revision, factual_revision_guidance
+from conversational_intelligence import resolve_followup, response_guidance, natural_acknowledgment, clarification_needed, conversation_guidance, feedback_response, quality_guidance, adaptive_guidance, adaptive_clarification, precision_guidance, length_guidance, increment7_guidance, contextual_subject, response_policy, response_needs_revision, format_violation, factual_revision_guidance
 
 MEMORY_FILE = Path(__file__).with_name("ai_memory.json")
 HISTORY_FILE = Path(__file__).with_name("conversation_history.json")
@@ -247,10 +247,11 @@ class ALFI:
             if isinstance(answer, str) and answer.strip():
                 answer = answer.strip()
                 issue = factual_revision_guidance(message, answer)
+                format_issue = format_violation(message, answer)
                 if response_needs_revision(message, answer) or issue:
                     revision_messages = messages + [
                         {"role": "assistant", "content": answer},
-                        {"role": "user", "content": ("Revise the previous answer without repeated steps. Preserve factual meaning and caveats. " + issue + (" Use at most two short sentences, no list." if "brief" in message.lower() else " Keep the answer focused and concise."))},
+                        {"role": "user", "content": ("Revise the previous answer without repeated steps. Preserve factual meaning and caveats. " + issue + " " + format_issue + (" Use at most two short sentences, no list." if "brief" in message.lower() and not format_issue else " Keep the answer focused and concise."))},
                     ]
                     retry_payload = json.dumps({"model": self.ollama_model, "messages": revision_messages, "stream": False}).encode("utf-8")
                     retry_request = urllib.request.Request(self.ollama_url, data=retry_payload,
