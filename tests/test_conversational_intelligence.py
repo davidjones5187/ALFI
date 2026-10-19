@@ -316,11 +316,11 @@ class Increment8FormatTests(unittest.TestCase):
     def test_numbered_list_requires_separate_lines(self):
         prompt = "Name exactly two things a plant needs. Use a numbered list."
         self.assertTrue(format_violation(prompt, "1) Water and 2) Sunlight"))
-        self.assertFalse(format_violation(prompt, "1. Water\\n2. Sunlight"))
+        self.assertFalse(format_violation(prompt, "1. Water\n2. Sunlight"))
 
     def test_numbered_list_exact_count(self):
         prompt = "Name exactly two things a plant needs. Use a numbered list."
-        self.assertTrue(format_violation(prompt, "1. Water\\n2. Light\\n3. Air"))
+        self.assertTrue(format_violation(prompt, "1. Water\n2. Light\n3. Air"))
 
     def test_one_word_only(self):
         self.assertFalse(format_violation("Answer with exactly one word.", "Yellow."))
