@@ -213,10 +213,11 @@ class ALFI:
             answer = result.get("message", {}).get("content", "")
             if isinstance(answer, str) and answer.strip():
                 answer = answer.strip()
-                if response_needs_revision(message, answer):
+                issue = factual_revision_guidance(message, answer)
+                if response_needs_revision(message, answer) or issue:
                     revision_messages = messages + [
                         {"role": "assistant", "content": answer},
-                        {"role": "user", "content": "Rewrite in at most two short sentences, no list. Preserve factual meaning and caveats."},
+                        {"role": "user", "content": ("Revise the previous answer without repeated steps. Preserve factual meaning and caveats. " + issue + (" Use at most two short sentences, no list." if "brief" in message.lower() else " Keep the answer focused and concise."))},
                     ]
                     retry_payload = json.dumps({"model": OLLAMA_MODEL, "messages": revision_messages, "stream": False}).encode("utf-8")
                     retry_request = urllib.request.Request(self.ollama_url, data=retry_payload,
@@ -225,7 +226,8 @@ class ALFI:
                         with urllib.request.urlopen(retry_request, timeout=90) as retry_response:
                             retry_result = json.load(retry_response)
                         candidate = retry_result.get("message", {}).get("content", "")
-                        if isinstance(candidate, str) and candidate.strip() and not response_needs_revision(message, candidate):
+                        if (isinstance(candidate, str) and candidate.strip() and not response_needs_revision(message, candidate)
+                                and not factual_revision_guidance(message, candidate)):
                             return candidate.strip()
                     except (urllib.error.URLError, TimeoutError, OSError, ValueError, KeyError):
                         pass
