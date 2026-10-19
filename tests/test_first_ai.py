@@ -90,7 +90,9 @@ class TestALFI(unittest.TestCase):
             with patch("first_ai.urllib.request.urlopen", return_value=fake) as mocked:
                 self.assertEqual(ai.respond("tell me more"), "For example, spam filtering.")
                 messages = json.loads(mocked.call_args.args[0].data)["messages"]
-                self.assertEqual(messages[-2]["content"], "AI recognizes patterns.")
+                self.assertTrue(any(m["role"] == "assistant" and m["content"] == "AI recognizes patterns." for m in messages))
+                self.assertEqual(messages[-1]["role"], "user")
+                self.assertIn("explain artificial intelligence", messages[-1]["content"].lower())
 
     def test_forget_topic(self):
         with tempfile.TemporaryDirectory() as folder:
