@@ -8,7 +8,7 @@ import urllib.request
 from collections import Counter
 from pathlib import Path
 from memory_intelligence import MemoryStore
-from conversational_intelligence import resolve_followup, response_guidance, natural_acknowledgment, clarification_needed, conversation_guidance, feedback_response, quality_guidance, adaptive_guidance, adaptive_clarification, precision_guidance, length_guidance, increment7_guidance, contextual_subject, response_policy, response_needs_revision
+from conversational_intelligence import resolve_followup, response_guidance, natural_acknowledgment, clarification_needed, conversation_guidance, feedback_response, quality_guidance, adaptive_guidance, adaptive_clarification, precision_guidance, length_guidance, increment7_guidance, contextual_subject, response_policy, response_needs_revision, factual_revision_guidance
 
 MEMORY_FILE = Path(__file__).with_name("ai_memory.json")
 HISTORY_FILE = Path(__file__).with_name("conversation_history.json")
