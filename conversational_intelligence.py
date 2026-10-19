@@ -197,7 +197,7 @@ def adaptive_clarification(message, history):
 
 # Increment 6: bounded referent and precision guidance. Advisory only.
 IMPORTANCE = re.compile(r"^why (?:is|are|was|were) (?:it|that|this|they) important[?.! ]*$", re.I)
-QUANTUM = re.compile(r"\\bquantum (?:comput(?:ing|ers?)|algorithm|advantage|optimization)\\b", re.I)
+QUANTUM = re.compile(r"\bquantum (?:comput(?:ing|ers?)|algorithm|advantage|optimization)\b", re.I)
 
 def contextual_subject(message, history, max_turns=5):
     """Find the last explicit subject, never use assistant text as user intent."""
@@ -213,7 +213,7 @@ def contextual_subject(message, history, max_turns=5):
         if (not prior or COMMAND.match(prior) or FOLLOWUP.fullmatch(prior)
                 or IMPORTANCE.fullmatch(prior) or CORRECTION.match(prior)):
             continue
-        if re.match(r"^(?:explain|describe|what is|what are|tell me about)\\b", prior, re.I):
+        if re.match(r"^(?:explain|describe|what is|what are|tell me about)\b", prior, re.I):
             return prior
     return None
 
