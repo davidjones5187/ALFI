@@ -264,3 +264,39 @@ def increment7_guidance(message, history):
         rules.append("Do not restate points already given in the previous answer unless essential to the new question.")
     rules.append("Do not promise universal quantum advantage, unbreakable encryption, or established speedups for generic optimization or machine learning. Backpropagation computes gradients; an optimizer updates parameters. Express uncertainty when evidence is limited.")
     return " ".join(rules)
+
+# Increment 8: one bounded response policy, with no persistent side effects.
+def response_policy(message, history):
+    """Consolidate conversational instructions without mutating history."""
+    if not message.strip() or COMMAND.match(message.strip()):
+        return ""
+    parts = [
+        "Answer the current question directly and accurately.",
+        "Do not invent memories, verification, or model learning.",
+        "Distinguish established results from hypothetical applications.",
+    ]
+    if BRIEF.search(message):
+        parts.append("STRICT LENGTH: one or two short sentences, no lists or headings.")
+    elif DETAIL.search(message) or TECHNICAL.search(message):
+        parts.append("Provide focused technical mechanisms and necessary caveats.")
+    else:
+        parts.append("Prefer one short paragraph.")
+    if CORRECTION.match(message):
+        parts.append("Address ONLY the user's corrected scope; do not restart the earlier explanation or claim memory was saved.")
+    elif resolve_followup(message, history) or contextual_subject(message, history):
+        parts.append("Build on the established subject without repeating the prior answer.")
+    else:
+        parts.append("Do not import unrelated topics from history.")
+    parts.append(precision_guidance(message, history))
+    return " ".join(parts)
+
+
+def response_needs_revision(message, answer):
+    """Flag length violations; never truncate facts or rewrite user data."""
+    if not BRIEF.search(message) or not isinstance(answer, str):
+        return False
+    text = answer.strip()
+    if not text:
+        return False
+    sentences = re.split(r"(?<=[.!?])\\s+", text)
+    return len(sentences) > 2 or len(text.split()) > 65 or bool(re.search(r"(?m)^\\s*(?:[-*] |\\d+[.)] )", text))
