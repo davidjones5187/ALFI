@@ -80,6 +80,37 @@ class TestALFI(unittest.TestCase):
             ai = ALFI(Path(folder) / "memory.json", use_ollama=False)
             self.assertIn("don't know", ai.respond("explain quantum gravity"))
 
+    def test_generated_followup_uses_model(self):
+        with tempfile.TemporaryDirectory() as folder:
+            ai = ALFI(Path(folder) / "memory.json")
+            ai.record = lambda user, answer: ai.history.append({"user": user, "assistant": answer})
+            ai.record("explain artificial intelligence", "AI recognizes patterns.")
+            ai.last_source = "generated"
+            fake = io.BytesIO(json.dumps({"message": {"content": "For example, spam filtering."}}).encode())
+            with patch("first_ai.urllib.request.urlopen", return_value=fake) as mocked:
+                self.assertEqual(ai.respond("tell me more"), "For example, spam filtering.")
+                messages = json.loads(mocked.call_args.args[0].data)["messages"]
+                self.assertEqual(messages[-2]["content"], "AI recognizes patterns.")
+
+    def test_forget_topic(self):
+        with tempfile.TemporaryDirectory() as folder:
+            ai = ALFI(Path(folder) / "memory.json", use_ollama=False)
+            ai.teach("project_identity", "what is project inception?", "Phase One.")
+            self.assertTrue(ai.forget_topic("project identity"))
+            self.assertFalse(ai.forget_topic("project identity"))
+            self.assertNotIn("project_identity", ALFI(Path(folder) / "memory.json").data)
+
+    def test_clear_history(self):
+        with tempfile.TemporaryDirectory() as folder:
+            ai = ALFI(Path(folder) / "memory.json", use_ollama=False)
+            ai.history = [{"user": "hello", "assistant": "hi"}]
+            ai.last_topic = "greeting"
+            ai.last_source = "taught"
+            ai.clear_history()
+            self.assertEqual(ai.history, [])
+            self.assertIsNone(ai.last_topic)
+            self.assertIsNone(ai.last_source)
+
     def test_learning_persists(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "memory.json"
