@@ -158,3 +158,38 @@ def quality_guidance(message):
             "especially for technical or security claims. Distinguish established "
             "facts from potential applications and limitations. Do not repeat "
             "definitions unnecessarily.")
+
+
+# Increment 5: bounded adaptive reasoning hints; no memory mutation.
+BEGINNER = re.compile(r"\b(?:beginner|simple terms|plain english|new to|don't know much|explain simply)\b", re.I)
+TECHNICAL = re.compile(r"\b(?:technical detail|technical explanation|advanced explanation|mathematical|implementation details)\b", re.I)
+AMBIGUOUS = re.compile(r"^(?:what about (?:it|that|this)|why is (?:it|that) important|how does (?:it|that) work)[?.! ]*$", re.I)
+
+def adaptive_guidance(message, history):
+    """Provide limited style and epistemic guidance without rewriting history."""
+    message = message.strip()
+    if not message or COMMAND.match(message):
+        return ""
+    if BEGINNER.search(message):
+        style = "Explain in everyday language, defining jargon and using one concrete example."
+    elif TECHNICAL.search(message):
+        style = "Give technical mechanisms and caveats appropriate to an advanced reader."
+    else:
+        style = "Use accessible language and define technical terms when first introduced."
+    return (style + " Distinguish proven results from hypotheses or potential uses. "
+            "Do not claim a universal speedup, perfect security, or certainty without evidence. "
+            "If the question is underspecified, ask one focused clarifying question.")
+
+def adaptive_clarification(message, history):
+    """Only interrupt a narrow set of pronoun-only questions without context."""
+    if not AMBIGUOUS.fullmatch(message.strip()):
+        return None
+    if resolve_followup(message, history) is not None:
+        return None
+    # Any substantive recent user question can establish a referent.
+    for turn in reversed(history[-5:]):
+        if isinstance(turn, dict) and isinstance(turn.get("user"), str):
+            prior = turn["user"].strip()
+            if prior and not COMMAND.match(prior) and not FOLLOWUP.fullmatch(prior):
+                return None
+    return "Which topic are you referring to?"
