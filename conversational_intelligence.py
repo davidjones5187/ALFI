@@ -265,6 +265,36 @@ def increment7_guidance(message, history):
     rules.append("Do not promise universal quantum advantage, unbreakable encryption, or established speedups for generic optimization or machine learning. Backpropagation computes gradients; an optimizer updates parameters. Express uncertainty when evidence is limited.")
     return " ".join(rules)
 
+
+# Increment 8: narrow format constraints, without changing saved memory.
+FORMAT_DIGITS = re.compile(r"\b(?:answer|respond|reply) with (?:just |only )?(?:the )?(?:number|digits?)\b", re.I)
+FORMAT_WORD = re.compile(r"\b(?:exactly one word|one word only|single word)\b", re.I)
+FORMAT_LIST = re.compile(r"\bnumbered list\b", re.I)
+FORMAT_COUNT = re.compile(r"\bexactly (two|three|four|five|[2-5]) (?:things|items|examples|reasons|steps|ways)\b", re.I)
+
+def format_violation(message, answer):
+    """Return corrective instructions for narrowly specified formats."""
+    if not isinstance(answer, str) or not answer.strip():
+        return ""
+    answer = answer.strip()
+    if FORMAT_DIGITS.search(message) and not re.fullmatch(r"-?\d+(?:\.\d+)?", answer):
+        return "Output only the numeric digits, without words or punctuation."
+    if FORMAT_WORD.search(message) and not re.fullmatch(r"[^\W\d_]+[.!]?", answer, re.UNICODE):
+        return "Output exactly one word and no explanation."
+    if FORMAT_LIST.search(message):
+        lines = [line.strip() for line in answer.splitlines() if line.strip()]
+        if not lines or any(not re.match(r"^\d+[.)]\s+\S", line) for line in lines):
+            return "Output a numbered list with each item on its own line and no preamble."
+        match = FORMAT_COUNT.search(message)
+        if match:
+            counts = {"two": 2, "three": 3, "four": 4, "five": 5}
+            required = counts.get(match.group(1), None)
+            if required is None:
+                required = int(match.group(1))
+            if len(lines) != required:
+                return f"Output exactly {required} numbered items, one per line."
+    return ""
+
 # Increment 8: one bounded response policy, with no persistent side effects.
 def response_policy(message, history):
     """Consolidate conversational instructions without mutating history."""
@@ -275,7 +305,13 @@ def response_policy(message, history):
         "Do not invent memories, verification, or model learning.",
         "Distinguish established results from hypothetical applications.",
     ]
-    if BRIEF.search(message):
+    if FORMAT_DIGITS.search(message):
+        parts.append("STRICT FORMAT: output numeric digits only; no words or punctuation.")
+    if FORMAT_WORD.search(message):
+        parts.append("STRICT FORMAT: output exactly one word.")
+    if FORMAT_LIST.search(message):
+        parts.append("STRICT FORMAT: numbered list, one item per line, no preamble; honor any exact item count.")
+    if BRIEF.search(message) and not FORMAT_LIST.search(message):
         parts.append("STRICT LENGTH: one or two short sentences, no lists or headings.")
     elif DETAIL.search(message) or TECHNICAL.search(message):
         parts.append("Provide focused technical mechanisms and necessary caveats.")
@@ -299,6 +335,8 @@ def response_needs_revision(message, answer):
     """Flag overly long answers without truncating content."""
     if not isinstance(answer, str) or not answer.strip():
         return False
+    if format_violation(message, answer):
+        return True
     if (DETAIL.search(message) or TECHNICAL.search(message)) and not BRIEF.search(message):
         return False
     text = answer.strip()
