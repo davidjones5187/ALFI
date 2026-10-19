@@ -106,7 +106,8 @@ class TestALFI(unittest.TestCase):
             ai.history = [{"user": "hello", "assistant": "hi"}]
             ai.last_topic = "greeting"
             ai.last_source = "taught"
-            ai.clear_history()
+            with patch("first_ai.HISTORY_FILE", Path(folder) / "history.json"):
+                ai.clear_history()
             self.assertEqual(ai.history, [])
             self.assertIsNone(ai.last_topic)
             self.assertIsNone(ai.last_source)
