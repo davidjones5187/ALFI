@@ -8,7 +8,7 @@ import urllib.request
 from collections import Counter
 from pathlib import Path
 from memory_intelligence import MemoryStore
-from conversational_intelligence import resolve_followup, response_guidance, natural_acknowledgment, clarification_needed, conversation_guidance, feedback_response, quality_guidance
+from conversational_intelligence import resolve_followup, response_guidance, natural_acknowledgment, clarification_needed, conversation_guidance, feedback_response, quality_guidance, adaptive_guidance, adaptive_clarification
 
 MEMORY_FILE = Path(__file__).with_name("ai_memory.json")
 HISTORY_FILE = Path(__file__).with_name("conversation_history.json")
@@ -198,6 +198,7 @@ class ALFI:
         messages.append({"role": "system", "content": response_guidance(message, self.recent_history(5))})
         messages.append({"role": "system", "content": conversation_guidance(message, self.recent_history(5))})
         messages.append({"role": "system", "content": quality_guidance(message)})
+        messages.append({"role": "system", "content": adaptive_guidance(message, self.recent_history(5))})
         resolved = resolve_followup(message, self.recent_history(5))
         messages.append({"role": "user", "content": resolved or message})
         payload = json.dumps({"model": OLLAMA_MODEL, "messages": messages,
@@ -220,6 +221,9 @@ class ALFI:
         feedback = feedback_response(message)
         if feedback is not None:
             return feedback
+        clarification = adaptive_clarification(message, self.recent_history(5))
+        if clarification:
+            return clarification
         clarification = clarification_needed(message, self.recent_history(5))
         if clarification:
             return clarification
