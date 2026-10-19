@@ -28,6 +28,26 @@ class TestALFI(unittest.TestCase):
             ai.teach("project_identity", "what is project inception?", "Phase One.")
             self.assertEqual(ai.respond("What is project inception?"), "Phase One.")
 
+    def test_paraphrase_matches(self):
+        with tempfile.TemporaryDirectory() as folder:
+            ai = ALFI(Path(folder) / "memory.json")
+            ai.teach("project_identity", "what is project inception?", "First phase.")
+            self.assertEqual(ai.respond("Tell me about project inception"), "First phase.")
+
+    def test_followup_uses_topic(self):
+        with tempfile.TemporaryDirectory() as folder:
+            ai = ALFI(Path(folder) / "memory.json")
+            ai.teach("project_identity", "what is project inception?", "First phase.")
+            ai.respond("what is project inception?")
+            self.assertIn("First phase.", ai.respond("tell me more"))
+
+    def test_reteach_replaces_answer(self):
+        with tempfile.TemporaryDirectory() as folder:
+            ai = ALFI(Path(folder) / "memory.json")
+            ai.teach("creator", "who created you", "Original")
+            ai.teach("creator", "who created you", "Updated")
+            self.assertEqual(ai.respond("who created you"), "Updated")
+
     def test_learning_persists(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "memory.json"
