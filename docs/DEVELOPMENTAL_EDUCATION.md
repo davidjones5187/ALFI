@@ -119,3 +119,13 @@ User restarted with `python3 first_ai.py`; banner `A.L.F.I. 1.6-dev | Conversati
 5. Hot tea left on table: "The tea's temperature will decrease over time, as heat is transferred to the surrounding environment (the table and air) through conduction and convection, causing the tea to lose heat and eventually cool down." **2/2**.
 
 **Fresh-session score: 8/10 (80%).** Prior diagnostic: 9/14 (64.3%). These are different test sets and not evidence of learning or a longitudinal score improvement. Stage 3 remains under assessment; one session at threshold does not satisfy three-session/novel-variant requirements. Failure may concern action/possession semantics, arithmetic application, or answer generation; do not assign a cause without discriminating probes. Next uncoached basic probe: "You have six pencils. You put two pencils in a drawer. How many pencils are still in your hand?" Expected four, assuming all six began in hand; if the user has not specified that, wording should be clarified to "You are holding six pencils. You put two in a drawer. How many are still in your hand?" No code/model changes; Increment 8 open, Increment 9 on hold.
+
+## Preliminary direct Gemma comparison (2026-10-19)
+
+User installed `gemma3:4b` via `ollama pull gemma3:4b` and ran `ollama run gemma3:4b` directly, **not inside A.L.F.I.** Three repeated baseline prompts yielded:
+
+1. Six pencils, give two away: "You have 4 pencils left. 6 - 2 = 4" — **2/2**.
+2. One kilogram feathers versus one kilogram rocks: "They weigh the same. One kilogram is one kilogram..." — **2/2**.
+3. Two five-kilogram boxes, books versus clothes: "They both weigh the same! Each box has a mass of five kilograms..." — **2/2**.
+
+**Gemma direct Ollama: 6/6 (100%).** Previous A.L.F.I. application responses to the same three prompts: **4/6 (66.7%)**, failing feathers/rocks. These are **not controlled head-to-head model-only tests**: Llama ran inside A.L.F.I. with application prompts/memory/settings, Gemma ran directly through Ollama, and prompts were already known. Do not infer proven model superiority or learning. Next compare both models directly with identical settings and fresh held-out foundational questions, then test Gemma in an isolated A.L.F.I. development configuration only if warranted. Do not alter stable main or persistent memory. Stage 3 remains under assessment, Increment 8 open, Increment 9 on hold.
