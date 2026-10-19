@@ -1,6 +1,6 @@
 """Regression tests for A.L.F.I. 1.6 follow-up resolution."""
 import unittest
-from conversational_intelligence import resolve_followup, response_guidance, natural_acknowledgment
+from conversational_intelligence import resolve_followup, response_guidance, natural_acknowledgment, conversational_intent, clarification_needed, conversation_guidance
 
 class ConversationalIntelligenceTests(unittest.TestCase):
     def test_example_retains_subject(self):
@@ -78,3 +78,33 @@ class NaturalAcknowledgmentTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+class Phase2Tests(unittest.TestCase):
+    def test_correction(self):
+        self.assertEqual(conversational_intent("Actually, I meant Python."), "correction")
+
+    def test_alternative_praise(self):
+        self.assertEqual(conversational_intent("Nice work!"), "acknowledgment")
+
+    def test_missing_context(self):
+        self.assertIsNotNone(clarification_needed("Tell me more.", []))
+
+    def test_followup_with_context(self):
+        history = [{"user": "Explain neural networks.", "assistant": "Networks."}]
+        self.assertIsNone(clarification_needed("Tell me more.", history))
+
+    def test_new_topic_not_intercepted(self):
+        history = [{"user": "Explain Python."}]
+        self.assertIsNone(clarification_needed("Explain chemistry.", history))
+
+    def test_correction_does_not_claim_memory_update(self):
+        self.assertIn("without claiming permanent memory", conversation_guidance("Actually, I meant Java.", []))
+
+    def test_commands_not_intercepted(self):
+        self.assertEqual(conversational_intent("/forget"), "other")
+
+    def test_history_unchanged(self):
+        history = [{"user": "Explain Python."}]
+        before = [dict(t) for t in history]
+        conversation_guidance("Tell me more.", history)
+        self.assertEqual(history, before)
