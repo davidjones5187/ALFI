@@ -153,7 +153,8 @@ class ALFI:
             "Your model weights do not change during chat. Conversation history is temporary context, "
             "and only /teach saves permanent lessons. Never invent past interactions or "
             "claim to have learned or updated knowledge from ordinary conversation. "
-            "When asked for an example, address the most recent subject directly."
+            "For examples, use a concrete external scenario, not a story about your own learning. "
+            "Never say that chatting retrains your model. Chat logs can persist locally."
         )}]
         for turn in self.recent_history(5):
             if isinstance(turn, dict):
@@ -161,6 +162,15 @@ class ALFI:
                 if isinstance(user, str) and isinstance(answer, str):
                     messages.extend([{"role": "user", "content": user},
                                      {"role": "assistant", "content": answer}])
+        if "example" in tokenize(message):
+            for turn in reversed(self.recent_history(5)):
+                if isinstance(turn, dict) and isinstance(turn.get("user"), str):
+                    prior = turn["user"]
+                    if "example" not in tokenize(prior):
+                        messages.append({"role": "system", "content":
+                                         "The current subject is: " + prior +
+                                         ". Give a concrete external example, not an account of your own learning."})
+                        break
         messages.append({"role": "user", "content": message})
         payload = json.dumps({"model": OLLAMA_MODEL, "messages": messages,
                               "stream": False}).encode("utf-8")
