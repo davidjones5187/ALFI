@@ -34,3 +34,18 @@ The assistant now tracks whether the last answer came from taught knowledge or f
 
 ## Version 1.4.1 — Context Accuracy Patch
 Questions about whether A.L.F.I. learns permanently receive a code-defined explanation distinguishing model training, saved lessons, and locally stored chat history. Requests for examples explicitly include the previous subject and instructions to use an external scenario. These changes reduce, but cannot eliminate, misleading model output. The automated suite now has 17 tests; live Ollama output must still be evaluated manually because mocked API responses cannot validate language quality.
+
+## Version 1.5 — Memory Intelligence (development branch)
+Explicit structured memories are stored in `structured_memory.json` alongside the existing `ai_memory.json` and `conversation_history.json`. Existing data is not migrated or overwritten. The new commands are:
+- `/remember`: save a fact, preference, or instruction with a named key and confirmation.
+- `/memories`: inspect saved values, types, provenance, and timestamps.
+- `/recall`: retrieve up to three relevant saved entries by keyword overlap.
+- `/correct`: replace a saved value by key, preserving one current record.
+- `/forgetmemory`: delete a structured entry after confirmation.
+
+Up to three relevant structured memories are supplied to Ollama for context; the model does not retrain. This is keyword-based retrieval, not semantic embeddings. `/forget`, `/teach`, and `/clearhistory` retain their prior behavior. Deleting structured memory does not erase copies of facts already present in chat history or other files. Review those separately. Run `python3 -m unittest discover -s tests -v` and manually check live Ollama responses before release.
+
+## 1.5.1 Memory Integrity Patch (pending local validation)
+The `/correct` prompt now displays the full old and new values and requires explicit confirmation that the entire value is replaced. Enter the complete corrected value, not only the changed words. Direct questions matching exactly one saved fact key return the stored value without asking Ollama to interpret the provenance. Other questions continue to use the model; model responses may still be inaccurate. Source labels indicate user input method, not external verification.
+
+To validate: `python3 -m unittest discover -s tests -v`, then run `python3 first_ai.py` and ask `What computer do I use for development?`. Verify the full saved value appears with a not-independently-verified notice. Test `/correct` with a new full replacement and restart.

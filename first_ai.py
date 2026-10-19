@@ -7,6 +7,7 @@ import urllib.error
 import urllib.request
 from collections import Counter
 from pathlib import Path
+from memory_intelligence import MemoryStore
 
 MEMORY_FILE = Path(__file__).with_name("ai_memory.json")
 HISTORY_FILE = Path(__file__).with_name("conversation_history.json")
@@ -29,6 +30,7 @@ class ALFI:
         self.memory_file = Path(memory_file)
         self.use_ollama = use_ollama
         self.ollama_url = ollama_url
+        self.structured_memory = MemoryStore(self.memory_file.with_name('structured_memory.json'))
         self.data = self.load()
         self.train()
         self.history = self.load_history()
@@ -132,10 +134,27 @@ class ALFI:
             return "I don't have additional details about that topic yet."
         return "Here's what I know about " + topic.replace("_", " ") + ": " + " ".join(responses)
 
+    def direct_memory_answer(self, message):
+        """Answer explicit saved-fact questions without model speculation."""
+        query = set(tokenize(message)) - STOPWORDS
+        if not query or not ("?" in message or message.lower().startswith(("what ", "which ", "who ", "where "))):
+            return None
+        candidates = []
+        for item in self.structured_memory.items:
+            if item["kind"] != "fact":
+                continue
+            key_terms = set(tokenize(item["key"])) - STOPWORDS
+            if key_terms and key_terms <= query:
+                candidates.append(item)
+        if len(candidates) != 1:
+            return None
+        item = candidates[0]
+        return f"Your saved {item['key']} is: {item['value']}. (User-provided memory; not independently verified.)"
+
     def memory_explanation(self):
         return ("No. Chatting does not retrain my model or permanently teach me new facts. "
                 "Conversations may be saved locally in conversation_history.json and reused "
-                "as context. Only /teach saves lessons in ai_memory.json. "
+                "as context. /teach saves lessons in ai_memory.json; /remember and /correct save structured facts in structured_memory.json. "
                 "Use /clearhistory to erase local chat history.")
 
     def is_memory_question(self, message):
@@ -151,11 +170,15 @@ class ALFI:
             "a helpful local AI assistant. Be concise, accurate, and acknowledge uncertainty. "
             "You are a language model, not a conscious lifeform. "
             "Your model weights do not change during chat. Conversation history is temporary context, "
-            "and only /teach saves permanent lessons. Never invent past interactions or "
+            "and only /teach or /remember saves explicitly provided facts or lessons. Never invent past interactions or "
             "claim to have learned or updated knowledge from ordinary conversation. "
             "For examples, use a concrete external scenario, not a story about your own learning. "
-            "Never say that chatting retrains your model. Chat logs can persist locally."
+            "Never say that chatting retrains your model. Chat logs can persist locally. A memory source such as explicit /correct records how a user entered a value, NOT independent verification. Never claim a saved memory was externally verified merely because of its source label."
         )}]
+        relevant = self.structured_memory.search(message, limit=3)
+        if relevant:
+            facts = "\n".join(f"{item['kind']} ({item['key']}; source: {item['source']}): {item['value']}" for item in relevant)
+            messages.append({"role": "system", "content": "User-provided saved memories, not independently verified:\n" + facts})
         for turn in self.recent_history(5):
             if isinstance(turn, dict):
                 user, answer = turn.get("user"), turn.get("assistant")
@@ -191,6 +214,9 @@ class ALFI:
     def respond(self, message):
         if self.is_memory_question(message):
             return self.memory_explanation()
+        direct = self.direct_memory_answer(message)
+        if direct is not None:
+            return direct
         words = tokenize(message)
         if words in (["tell", "me", "more"], ["more", "about", "that"], ["what", "else", "do", "you", "know"]):
             if self.last_source == "taught" and self.last_topic:
@@ -283,8 +309,8 @@ def teaching_mode(ai):
 
 def main():
     ai = ALFI()
-    print("A.L.F.I. 1.4.1 | Context Accuracy Patch")
-    print("Commands: /teach, /knowledge, /forget, /history, /clearhistory, /help, /quit")
+    print("A.L.F.I. 1.5.1 | Memory Integrity Patch")
+    print("Commands: /teach, /knowledge, /forget, /history, /clearhistory, /remember, /memories, /recall, /correct, /forgetmemory, /help, /quit")
     while True:
         try:
             message = input("You: ").strip()
@@ -299,8 +325,49 @@ def main():
             break
         if command == "/cancel":
             print("No teaching session is active. Use /teach to start one.")
+        elif command == "/remember":
+            kind = input("Type (fact/preference/instruction): ").strip().lower()
+            key = input("Memory key: ").strip()
+            value = input("Memory value: ").strip()
+            if input("Save this memory? [y/N]: ").strip().lower() in ("y", "yes"):
+                try:
+                    ai.structured_memory.put(kind, key, value)
+                    print("Memory saved.")
+                except (ValueError, OSError) as exc:
+                    print("Memory not saved:", exc)
+        elif command == "/memories":
+            for item in ai.structured_memory.list_items():
+                print(f"{item['key']} [{item['kind']}]: {item['value']} | {item['source']} | {item['updated']}")
+        elif command == "/recall":
+            for item in ai.structured_memory.search(input("Search memory: ")):
+                print(f"{item['key']} [{item['kind']}]: {item['value']} | {item['source']}")
+        elif command == "/correct":
+            key = input("Memory key: ").strip().lower()
+            old = next((item for item in ai.structured_memory.items if item["key"] == key), None)
+            if old is None:
+                print("Memory not found.")
+            else:
+                print("Current:", old["value"])
+                print("Enter the COMPLETE replacement value. Existing details are not automatically retained.")
+                value = input("Full corrected value: ").strip()
+                if value:
+                    print("Before:", old["value"])
+                    print("After: ", value)
+                if value and input("Replace the entire old value with this new value? [y/N]: ").strip().lower() in ("y", "yes"):
+                    try:
+                        ai.structured_memory.put(old["kind"], key, value, "explicit /correct")
+                        print("Memory corrected.")
+                    except (ValueError, OSError) as exc:
+                        print("Correction failed:", exc)
+        elif command == "/forgetmemory":
+            key = input("Memory key to delete: ").strip()
+            if key and input("Delete this memory? [y/N]: ").strip().lower() in ("y", "yes"):
+                try:
+                    print("Memory removed." if ai.structured_memory.forget(key) else "Memory not found.")
+                except OSError as exc:
+                    print("Deletion failed:", exc)
         elif command == "/help":
-            print("/teach: save lesson | /knowledge: topics | /forget: remove a topic | /history: recent chats | /clearhistory: erase chats | /quit: exit")
+            print("/teach lesson | /knowledge topics | /forget topic | /history chats | /clearhistory erase chats | /remember save | /memories list | /recall search | /correct revise | /forgetmemory delete | /quit exit")
         elif command == "/forget":
             topic = input("Topic to forget: ").strip()
             if topic and input(f"Delete taught topic {topic!r}? [y/N]: ").strip().lower() in ("y", "yes"):

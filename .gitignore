@@ -5,3 +5,5 @@ __pycache__/
 ai_memory.json
 .DS_Store
 conversation_history.json
+structured_memory.json
+structured_memory.json.tmp
