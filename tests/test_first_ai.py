@@ -59,7 +59,7 @@ class TestALFI(unittest.TestCase):
             with patch("first_ai.urllib.request.urlopen", return_value=fake) as mocked:
                 self.assertEqual(ai.respond("explain quantum gravity"), "A generated answer.")
                 request = mocked.call_args.args[0]
-                self.assertEqual(json.loads(request.data)["model"], "llama3.2:3b")
+                self.assertEqual(json.loads(request.data)["model"], "gemma3:4b")
 
     def test_taught_knowledge_skips_model(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -174,3 +174,40 @@ class Increment8RetryIntegrationTests(unittest.TestCase):
             with patch("first_ai.urllib.request.urlopen", return_value=self._response("Photosynthesis converts light to chemical energy.")) as model:
                 self.assertIn("Photosynthesis", ai.generate("Explain photosynthesis."))
                 self.assertEqual(model.call_count, 1)
+
+class ModelSelectionTests(unittest.TestCase):
+    def _model_used(self, ai):
+        fake = io.BytesIO(json.dumps({"message": {"content": "Model response."}}).encode())
+        with patch("first_ai.urllib.request.urlopen", return_value=fake) as call:
+            ai.generate("What causes rain?")
+        return json.loads(call.call_args.args[0].data)["model"]
+
+    def test_gemma_default(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with patch.dict("first_ai.os.environ", {"ALFI_OLLAMA_MODEL": ""}):
+                ai = ALFI(Path(folder) / "memory.json")
+                self.assertEqual(self._model_used(ai), "gemma3:4b")
+
+    def test_llama_fallback_via_environment(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with patch.dict("first_ai.os.environ", {"ALFI_OLLAMA_MODEL": "llama3.2:3b"}):
+                ai = ALFI(Path(folder) / "memory.json")
+                self.assertEqual(self._model_used(ai), "llama3.2:3b")
+
+    def test_explicit_model_override(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with patch.dict("first_ai.os.environ", {"ALFI_OLLAMA_MODEL": "llama3.2:3b"}):
+                ai = ALFI(Path(folder) / "memory.json", ollama_model="gemma3:4b")
+                self.assertEqual(self._model_used(ai), "gemma3:4b")
+
+    def test_retry_uses_same_selected_model(self):
+        with tempfile.TemporaryDirectory() as folder:
+            ai = ALFI(Path(folder) / "memory.json", ollama_model="llama3.2:3b")
+            answers = [
+                io.BytesIO(json.dumps({"message": {"content": "word " * 190}}).encode()),
+                io.BytesIO(json.dumps({"message": {"content": "A focused answer."}}).encode()),
+            ]
+            with patch("first_ai.urllib.request.urlopen", side_effect=answers) as call:
+                ai.generate("Explain photosynthesis.")
+            self.assertEqual(call.call_count, 2)
+            self.assertTrue(all(json.loads(x.args[0].data)["model"] == "llama3.2:3b" for x in call.call_args_list))
