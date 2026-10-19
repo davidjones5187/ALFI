@@ -7,6 +7,7 @@ import urllib.error
 import urllib.request
 from collections import Counter
 from pathlib import Path
+from memory_intelligence import MemoryStore
 
 MEMORY_FILE = Path(__file__).with_name("ai_memory.json")
 HISTORY_FILE = Path(__file__).with_name("conversation_history.json")
@@ -29,6 +30,7 @@ class ALFI:
         self.memory_file = Path(memory_file)
         self.use_ollama = use_ollama
         self.ollama_url = ollama_url
+        self.structured_memory = MemoryStore(self.memory_file.with_name('structured_memory.json'))
         self.data = self.load()
         self.train()
         self.history = self.load_history()
@@ -156,6 +158,10 @@ class ALFI:
             "For examples, use a concrete external scenario, not a story about your own learning. "
             "Never say that chatting retrains your model. Chat logs can persist locally."
         )}]
+        relevant = self.structured_memory.search(message, limit=3)
+        if relevant:
+            facts = "\n".join(f"{item['kind']} ({item['key']}; source: {item['source']}): {item['value']}" for item in relevant)
+            messages.append({"role": "system", "content": "User-provided saved memories, not independently verified:\n" + facts})
         for turn in self.recent_history(5):
             if isinstance(turn, dict):
                 user, answer = turn.get("user"), turn.get("assistant")
@@ -283,8 +289,8 @@ def teaching_mode(ai):
 
 def main():
     ai = ALFI()
-    print("A.L.F.I. 1.4.1 | Context Accuracy Patch")
-    print("Commands: /teach, /knowledge, /forget, /history, /clearhistory, /help, /quit")
+    print("A.L.F.I. 1.5 | Memory Intelligence")
+    print("Commands: /teach, /knowledge, /forget, /history, /clearhistory, /remember, /memories, /recall, /correct, /forgetmemory, /help, /quit")
     while True:
         try:
             message = input("You: ").strip()
@@ -299,8 +305,45 @@ def main():
             break
         if command == "/cancel":
             print("No teaching session is active. Use /teach to start one.")
+        elif command == "/remember":
+            kind = input("Type (fact/preference/instruction): ").strip().lower()
+            key = input("Memory key: ").strip()
+            value = input("Memory value: ").strip()
+            if input("Save this memory? [y/N]: ").strip().lower() in ("y", "yes"):
+                try:
+                    ai.structured_memory.put(kind, key, value)
+                    print("Memory saved.")
+                except (ValueError, OSError) as exc:
+                    print("Memory not saved:", exc)
+        elif command == "/memories":
+            for item in ai.structured_memory.list_items():
+                print(f"{item['key']} [{item['kind']}]: {item['value']} | {item['source']} | {item['updated']}")
+        elif command == "/recall":
+            for item in ai.structured_memory.search(input("Search memory: ")):
+                print(f"{item['key']} [{item['kind']}]: {item['value']} | {item['source']}")
+        elif command == "/correct":
+            key = input("Memory key: ").strip().lower()
+            old = next((item for item in ai.structured_memory.items if item["key"] == key), None)
+            if old is None:
+                print("Memory not found.")
+            else:
+                print("Current:", old["value"])
+                value = input("Corrected value: ").strip()
+                if value and input("Save correction? [y/N]: ").strip().lower() in ("y", "yes"):
+                    try:
+                        ai.structured_memory.put(old["kind"], key, value, "explicit /correct")
+                        print("Memory corrected.")
+                    except (ValueError, OSError) as exc:
+                        print("Correction failed:", exc)
+        elif command == "/forgetmemory":
+            key = input("Memory key to delete: ").strip()
+            if key and input("Delete this memory? [y/N]: ").strip().lower() in ("y", "yes"):
+                try:
+                    print("Memory removed." if ai.structured_memory.forget(key) else "Memory not found.")
+                except OSError as exc:
+                    print("Deletion failed:", exc)
         elif command == "/help":
-            print("/teach: save lesson | /knowledge: topics | /forget: remove a topic | /history: recent chats | /clearhistory: erase chats | /quit: exit")
+            print("/teach lesson | /knowledge topics | /forget topic | /history chats | /clearhistory erase chats | /remember save | /memories list | /recall search | /correct revise | /forgetmemory delete | /quit exit")
         elif command == "/forget":
             topic = input("Topic to forget: ").strip()
             if topic and input(f"Delete taught topic {topic!r}? [y/N]: ").strip().lower() in ("y", "yes"):
