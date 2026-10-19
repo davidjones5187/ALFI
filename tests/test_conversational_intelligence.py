@@ -287,3 +287,21 @@ class Increment8PolicyTests(unittest.TestCase):
         before = [dict(item) for item in history]
         response_policy("Tell me more.", history)
         self.assertEqual(history, before)
+
+from conversational_intelligence import factual_revision_guidance
+
+class Increment8CorrectiveTests(unittest.TestCase):
+    def test_default_long_answer_flagged(self):
+        self.assertTrue(response_needs_revision("Explain photosynthesis.", "word " * 181))
+
+    def test_technical_depth_allowed(self):
+        self.assertFalse(response_needs_revision("Give a technical explanation.", "word " * 300))
+
+    def test_correction_list_flagged(self):
+        self.assertTrue(response_needs_revision("Actually, I meant weight updates.", "1. First\n2. Second\n3. Third"))
+
+    def test_adam_guard(self):
+        self.assertIn("Adam formula", factual_revision_guidance("How does Adam update weights?", "∂L/∂w^2"))
+
+    def test_quantum_guard(self):
+        self.assertIn("unsupported", factual_revision_guidance("Does quantum computing help optimization?", "Quantum computers can solve unconstrained optimization faster."))
