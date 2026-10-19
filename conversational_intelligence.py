@@ -287,9 +287,9 @@ def response_policy(message, history):
         parts.append("Build on the established subject without repeating the prior answer.")
     else:
         parts.append("Do not import unrelated topics from history.")
-    if re.search(r"\\b(?:adam|weight updates?|optimizers?)\\b", message, re.I):
+    if re.search(r"\b(?:adam|weight updates?|optimizers?)\b", message, re.I):
         parts.append("Adam uses bias-corrected first and second gradient moments; never invent its update formula.")
-    if re.search(r"\\bquantum\\b", message, re.I):
+    if re.search(r"\bquantum\b", message, re.I):
         parts.append("Avoid broad unverified quantum speedup claims for unconstrained, linear, quadratic or semidefinite optimization.")
     parts.append(precision_guidance(message, history))
     return " ".join(parts)
@@ -303,8 +303,8 @@ def response_needs_revision(message, answer):
         return False
     text = answer.strip()
     words = len(text.split())
-    sentences = re.split(r"(?<=[.!?])\\s+", text)
-    items = len(re.findall(r"(?m)^\\s*(?:[-*] |\\d+[.)] )", text))
+    sentences = re.split(r"(?<=[.!?])\s+", text)
+    items = len(re.findall(r"(?m)^\s*(?:[-*] |\d+[.)] )", text))
     if BRIEF.search(message):
         return len(sentences) > 2 or words > 65 or items > 0
     if CORRECTION.match(message):
@@ -316,10 +316,10 @@ def factual_revision_guidance(message, answer):
     """Flag narrow, recognizable factual errors; not a general fact checker."""
     if not isinstance(answer, str):
         return ""
-    if re.search(r"\\b(?:adam|weight updates?|optimizers?)\\b", message, re.I):
+    if re.search(r"\b(?:adam|weight updates?|optimizers?)\b", message, re.I):
         if "∂L/∂w^2" in answer:
             return "Replace the incorrect Adam formula with bias-corrected first/second moments."
-    if re.search(r"\\bquantum\\b", message, re.I):
+    if re.search(r"\bquantum\b", message, re.I):
         if re.search(r"quantum computers? can (?:solve|speed up).*?(?:unconstrained|linear|quadratic|semidefinite)", answer, re.I | re.S):
             return "Remove unsupported category-wide quantum speedup claims."
     return ""
