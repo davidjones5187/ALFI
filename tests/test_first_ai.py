@@ -145,3 +145,32 @@ class TestALFI(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+class Increment8RetryIntegrationTests(unittest.TestCase):
+    def _response(self, content):
+        return io.BytesIO(json.dumps({"message": {"content": content}}).encode())
+
+    def test_default_retry(self):
+        with tempfile.TemporaryDirectory() as folder:
+            ai = ALFI(Path(folder) / "memory.json")
+            with patch("first_ai.urllib.request.urlopen", side_effect=[
+                self._response("word " * 190), self._response("A focused answer.")
+            ]) as model:
+                self.assertEqual(ai.generate("Explain photosynthesis."), "A focused answer.")
+                self.assertEqual(model.call_count, 2)
+
+    def test_failed_retry_preserves_original(self):
+        with tempfile.TemporaryDirectory() as folder:
+            ai = ALFI(Path(folder) / "memory.json")
+            with patch("first_ai.urllib.request.urlopen", side_effect=[
+                self._response("One. Two. Three."), urllib.error.URLError("offline")
+            ]) as model:
+                self.assertEqual(ai.generate("Briefly explain quantum computing."), "One. Two. Three.")
+                self.assertEqual(model.call_count, 2)
+
+    def test_compliant_answer_one_call(self):
+        with tempfile.TemporaryDirectory() as folder:
+            ai = ALFI(Path(folder) / "memory.json")
+            with patch("first_ai.urllib.request.urlopen", return_value=self._response("Photosynthesis converts light to chemical energy.")) as model:
+                self.assertIn("Photosynthesis", ai.generate("Explain photosynthesis."))
+                self.assertEqual(model.call_count, 1)
