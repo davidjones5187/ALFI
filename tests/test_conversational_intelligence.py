@@ -215,3 +215,40 @@ class Increment6PrecisionTests(unittest.TestCase):
         contextual_subject("Why is that important?", self.history)
         precision_guidance("Why is that important?", self.history)
         self.assertEqual(self.history, before)
+
+
+from conversational_intelligence import increment7_guidance
+
+class Increment7ResponseControlTests(unittest.TestCase):
+    def setUp(self):
+        self.history = [{"user": "Explain quantum computing.", "assistant": "Quantum computers use qubits."}]
+
+    def test_brief_has_priority(self):
+        self.assertIn("no more than two short sentences", increment7_guidance("Explain quantum computing briefly.", self.history))
+
+    def test_correction_avoids_restart(self):
+        guidance = increment7_guidance("Actually, I meant quantum computers specifically.", self.history)
+        self.assertIn("ONLY the corrected scope", guidance)
+        self.assertIn("do not claim memory was saved", guidance)
+
+    def test_followup_avoids_repetition(self):
+        self.assertIn("Do not restate points", increment7_guidance("Why is that important?", self.history))
+
+    def test_technical_precision(self):
+        guidance = increment7_guidance("Give a technical explanation.", [])
+        self.assertIn("Backpropagation computes gradients", guidance)
+        self.assertIn("unbreakable encryption", guidance)
+
+    def test_command_unaffected(self):
+        self.assertEqual(increment7_guidance("/correct", self.history), "")
+
+    def test_no_history_mutation(self):
+        before = [dict(item) for item in self.history]
+        increment7_guidance("Actually, I meant quantum computers.", self.history)
+        self.assertEqual(before, self.history)
+
+    def test_detail_not_forced_brief(self):
+        self.assertIn("focused technical explanation", increment7_guidance("Explain in detail.", []))
+
+    def test_no_context(self):
+        self.assertIn("Answer the question first", increment7_guidance("What is a qubit?", []))
