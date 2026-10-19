@@ -112,6 +112,28 @@ class TestALFI(unittest.TestCase):
             self.assertIsNone(ai.last_topic)
             self.assertIsNone(ai.last_source)
 
+    def test_memory_answer_is_grounded(self):
+        with tempfile.TemporaryDirectory() as folder:
+            ai = ALFI(Path(folder) / "memory.json")
+            with patch("first_ai.urllib.request.urlopen") as model:
+                answer = ai.respond("Did you permanently learn anything new from our conversation?")
+                self.assertIn("does not retrain", answer)
+                self.assertIn("conversation_history.json", answer)
+                self.assertIn("/teach", answer)
+                model.assert_not_called()
+
+    def test_example_prompt_includes_subject(self):
+        with tempfile.TemporaryDirectory() as folder:
+            ai = ALFI(Path(folder) / "memory.json")
+            ai.history = [{"user": "Explain how spam filters work",
+                           "assistant": "They classify messages."}]
+            fake = io.BytesIO(json.dumps({"message": {"content": "A sample email."}}).encode())
+            with patch("first_ai.urllib.request.urlopen", return_value=fake) as model:
+                ai.respond("Give me a simple example of that.")
+                messages = json.loads(model.call_args.args[0].data)["messages"]
+                self.assertTrue(any("Explain how spam filters work" in m["content"]
+                                    and m["role"] == "system" for m in messages))
+
     def test_learning_persists(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "memory.json"
