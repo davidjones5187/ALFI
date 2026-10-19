@@ -69,3 +69,51 @@ def natural_acknowledgment(message):
     if SOCIAL_PRAISE.fullmatch(message):
         return "Thanks! Glad that helped."
     return None
+
+
+# Phase 2: conservative intent detection and conversational safeguards.
+CORRECTION = re.compile(
+    r"^(?:actually|correction:|i meant|what i meant was|no,? i meant)\\b",
+    re.I,
+)
+ACKNOWLEDGMENT = re.compile(
+    r"^(?:thanks(?: a lot)?|thank you(?: very much)?|appreciate it|"
+    r"great job|good job|well done|nice work|that's helpful|"
+    r"that was helpful|you did great)[.! ]*$", re.I,
+)
+
+def conversational_intent(message):
+    """Classify only clear signals; never guess at a substantive question."""
+    message = message.strip()
+    if not message or COMMAND.match(message):
+        return "other"
+    if CORRECTION.match(message):
+        return "correction"
+    if ACKNOWLEDGMENT.fullmatch(message):
+        return "acknowledgment"
+    if FOLLOWUP.fullmatch(message):
+        return "followup"
+    return "other"
+
+
+def clarification_needed(message, history):
+    """Ask for context rather than fabricate a referent."""
+    if conversational_intent(message) != "followup":
+        return None
+    if resolve_followup(message, history) is None:
+        return "What topic would you like me to explain?"
+    return None
+
+
+def conversation_guidance(message, history):
+    """Additional model guidance; no memory writes or history mutations."""
+    intent = conversational_intent(message)
+    if intent == "correction":
+        return ("The user is correcting a previous statement. Acknowledge the "
+                "correction without claiming permanent memory was changed. "
+                "Ask for clarification if the corrected referent is unclear.")
+    if intent == "followup":
+        return ("Use only the resolved conversational subject. Do not revive "
+                "unrelated older topics.")
+    return ("Answer the current message without assuming it refers to an "
+            "earlier subject. Avoid repeating social acknowledgments.")
