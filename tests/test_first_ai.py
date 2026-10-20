@@ -61,6 +61,24 @@ class TestALFI(unittest.TestCase):
                 request = mocked.call_args.args[0]
                 self.assertEqual(json.loads(request.data)["model"], "gemma3:4b")
 
+    def test_prompt_debug_reports_structure_without_memory_contents(self):
+        with tempfile.TemporaryDirectory() as folder:
+            ai = ALFI(Path(folder) / "memory.json")
+            ai.debug = True
+            ai.history = [{"user": "private user text", "assistant": "private answer"}]
+            fake = io.BytesIO(json.dumps({"message": {"content": "Response."}}).encode())
+            with patch("first_ai.urllib.request.urlopen", return_value=fake), \\
+                 patch("first_ai.sys.stderr", new_callable=io.StringIO) as stderr:
+                ai.generate("What is the total?")
+            log = stderr.getvalue()
+            self.assertIn("prompt_roles: system,user,assistant,system,user", log)
+            self.assertIn("prompt_history_pairs: 1", log)
+            self.assertIn("prompt_saved_memory_matches: 0", log)
+            self.assertIn("prompt_generation_options: ollama_defaults", log)
+            self.assertNotIn("private user text", log)
+            self.assertNotIn("private answer", log)
+            self.assertNotIn("What is the total?", log)
+
     def test_taught_knowledge_skips_model(self):
         with tempfile.TemporaryDirectory() as folder:
             ai = ALFI(Path(folder) / "memory.json")
