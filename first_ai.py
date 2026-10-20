@@ -243,6 +243,15 @@ class ALFI:
             if subject:
                 resolved = "Why is the subject of this earlier question important? " + subject
         messages.append({"role": "user", "content": resolved or message})
+        if self.debug:
+            roles = [item["role"] for item in messages]
+            self.diagnostic("prompt_roles", ",".join(roles))
+            self.diagnostic("prompt_message_count", len(messages))
+            self.diagnostic("prompt_saved_memory_matches", len(relevant))
+            self.diagnostic("prompt_history_pairs", sum(1 for item in messages if item["role"] == "assistant"))
+            self.diagnostic("prompt_system_messages", roles.count("system"))
+            self.diagnostic("prompt_user_question", "resolved" if (resolved or message) != message else "original")
+            self.diagnostic("prompt_generation_options", "ollama_defaults")
         payload = json.dumps({"model": self.ollama_model, "messages": messages,
                               "stream": False}).encode("utf-8")
         request = urllib.request.Request(
