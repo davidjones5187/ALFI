@@ -3,6 +3,8 @@ import importlib.util
 import json
 from pathlib import Path
 import tempfile
+import subprocess
+import sys
 import unittest
 from unittest.mock import patch
 
@@ -13,6 +15,14 @@ spec.loader.exec_module(module)
 
 
 class Stage4DiagnosticTests(unittest.TestCase):
+    def test_direct_script_help_from_outside_repo(self):
+        with tempfile.TemporaryDirectory() as folder:
+            completed = subprocess.run(
+                [sys.executable, str(SCRIPT), "--help"],
+                cwd=folder, capture_output=True, text=True, timeout=15)
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            self.assertIn("--output", completed.stdout)
+
     def test_snapshot_reads_without_writing(self):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "history.json"
