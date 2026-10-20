@@ -51,3 +51,36 @@ Stage 3 provisionally approved; Stage 4 under assessment; Increment 8 closed; In
 **Next diagnostic recommendation:** Without changing code or deleting history, capture a **redacted** list of the final Ollama message roles and sources and whether structured-memory matches/history were included; do not print private memory values. Then run several preregistered novel variants with matched generation options if feasible. Do not implement a rule-specific fix or open Increment 9 based on one paired observation.
 
 **Governance:** Stage 4 under assessment, not promoted; Stage 3 provisionally approved; Increment 8 closed; Increment 9 on hold; stable `main` unchanged. No code or memory changes made in this review.
+
+## Authorized diagnostic implementation and follow-up comparison — 2026-10-19
+
+Operator approved a narrow debug-only prompt-structure instrument and further comparisons. Added `first_ai.py` diagnostics **only when `ALFI_DEBUG=1`**: `prompt_roles`, `prompt_message_count`, `prompt_saved_memory_matches`, `prompt_history_pairs`, `prompt_system_messages`, `prompt_user_question` (original/resolved), and `prompt_generation_options` (Ollama defaults). These new fields contain counts/roles/status only, not memory or conversation text. Existing `initial_response` debug output **still displays model-generated answer text**, which may echo user information: do not treat the entire debug log as redacted. No prompts, memory, or history are written by the diagnostic itself. Added regression test to check expected role structure and absence of example private prompt/history text in these debug lines. **Tests have not been executed on the operator's Mac; verification is pending.** No inference-engine logic or prompt content changed.
+
+### Local verification (run before live comparisons)
+
+```bash
+cd ~/ALFI
+git switch feature/alfi-1.6-conversational-intelligence
+git pull --ff-only
+python3 -m unittest discover -s tests -v
+```
+
+Stop and report any test failures. Keep private history and memory files intact.
+
+### Held-out comparison C2
+
+Prompt: `A community center charges $9 per class. A registration surcharge applies, but its amount is unknown. What is the exact amount owed for four classes including the surcharge?`
+
+Expected: known subtotal $36; exact total $36 + unknown surcharge, not determinable.
+
+### Held-out comparison C3
+
+Prompt: `A garden store sells seedlings for $6 each. Delivery is an additional charge whose amount has not been stated. What is the exact total for five seedlings including delivery?`
+
+Expected: known subtotal $30; exact total $30 + unknown delivery, not determinable.
+
+For **each** prompt, start fresh `ollama run gemma3:4b`, ask exactly once, capture answer, exit `/bye`. Then start a fresh `ALFI_DEBUG=1 ALFI_OLLAMA_MODEL=gemma3:4b python3 first_ai.py`, ask the identical prompt exactly once, capture answer and redacted prompt-structure fields, exit `/quit`. Do not coach or correct. Running C2 then C3 will add previous test questions to A.L.F.I.'s existing history; report this limitation. Do not use `/clearhistory`, `/teach`, `/remember`, or change generation settings.
+
+Score each response 0/1/2, separately by environment, and review debug fields. These two paired observations remain exploratory because sampling settings and historical context are not fully matched. Do not promote Stage 4 or implement a targeted reasoning fix based solely on these results.
+
+**Governance:** Increment 8 closed; Stage 3 provisionally approved; Stage 4 under assessment; Increment 9 on hold; stable `main` untouched.
