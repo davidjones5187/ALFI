@@ -375,7 +375,14 @@ def select_stage4_history(message, history, max_turns=5):
         r"(?:please\s+)?explain\s+(?:that\s+last\s+answer|your\s+answer)[?.! ]*",
         question, re.I,
     )
-    referential = (FOLLOWUP.fullmatch(question) or prior_answer_request or IMPORTANCE.fullmatch(question)
+    # Narrow, explicit dependencies on a previous answer or comparison.
+    # Do not match standalone questions that merely ask for an exact figure.
+    contextual_request = re.fullmatch(
+        r"(?:why (?:can't|cannot|can not) you give an exact (?:figure|total|answer)|"
+        r"which one is more important)[?.! ]*",
+        question, re.I,
+    )
+    referential = (FOLLOWUP.fullmatch(question) or prior_answer_request or contextual_request or IMPORTANCE.fullmatch(question)
                    or CORRECTION.match(question)
                    or re.fullmatch(r"(?:what did (?:i|you) (?:just )?say|"
                                    r"what was (?:my|your) (?:last|previous) (?:question|answer))"
