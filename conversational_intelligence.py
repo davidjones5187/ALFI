@@ -371,7 +371,7 @@ def select_stage4_history(message, history, max_turns=5):
     question = message.strip()
     if not question or COMMAND.match(question):
         return [], "independent"
-    referential = (FOLLOWUP.fullmatch(question) or IMPORTANCE.fullmatch(question)
+    prior_answer_request = re.fullmatch(\n        r"(?:please\\s+)?explain\\s+(?:that\\s+last\\s+answer|your\\s+answer)[?.! ]*",\n        question, re.I,\n    )\n    referential = (FOLLOWUP.fullmatch(question) or prior_answer_request or IMPORTANCE.fullmatch(question)
                    or CORRECTION.match(question)
                    or re.fullmatch(r"(?:what did (?:i|you) (?:just )?say|"
                                    r"what was (?:my|your) (?:last|previous) (?:question|answer))"
