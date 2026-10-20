@@ -83,3 +83,18 @@ python3 tools/stage4_continuity_diagnostic.py --output stage4_continuity_report.
 **Human review rubric:** Score whether follow-ups retain the correct preceding subject, whether independent topic shifts omit unrelated content, whether a follow-up after a shift refers to the **new** subject, and whether unknown-fee arithmetic avoids false exact totals. A single report contains the full answers and structural prompt diagnostics for comparison; do not infer correctness from execution success alone. Ollama defaults are unseeded; these synthetic conversations are not a production-equivalent saved-memory test.
 
 **Status:** remote implementation committed, local execution and live results not yet verified. Do not enable selective mode by default. Stage 4 NOT PASSED; Increment 9 ON HOLD; stable `main` unchanged.
+
+## Automated 24-turn continuity assessment — operator report 2026-10-20
+
+Source: user-uploaded `stage4_continuity_report.json` created `2026-10-20T03:36:40.187647+00:00`; `gemma3:4b`, Ollama defaults (unseeded), synthetic in-memory histories only, no saved-memory matches, all 24 final answers from initial generation without retries. Four scenarios each executed normal and selective (eight three-turn sequences).
+
+| Scenario | Normal | Selective | Assessment |
+|---|---|---|---|
+| F1 photosynthesis → why important → another example | Pass | Pass | Correct subject continuity |
+| F2 firewall → how work → tell more | Pass | Pass | Correct subject continuity, some repetitiveness |
+| T1 bicycle helmet → theater $27 + unknown fee → explain that | Fail | Pass | Normal explanation begins with invented $36 total then correctly says $27+x unknown; selective stays with theater and unknown fee |
+| T2 water cycle → museum $24 + unknown fee → why important | Fail | Fail | Both versions discuss the older water-cycle subject rather than most recent museum question; selective museum answer also incorrectly calls $24 the total including unknown service charge |
+
+**Source-path hypothesis (not yet instrumentally proven):** `contextual_subject` in `conversational_intelligence.py` skips recent substantive user questions that do not begin with `explain`, `describe`, `what is`, `what are`, or `tell me about`. It can therefore select the earlier `Explain the water cycle.` over the newer museum question when the user says `Why is it important?`. The observed T2 result is consistent with that behavior; inspect `response_policy`, `resolve_followup`, and `contextual_subject` jointly before changing code. A second independent issue is the false exact-total claim in selective T2 despite history exclusion.
+
+**Ruling:** Straightforward follow-up continuity 2/2 selective; topic-switch continuity 1/2 selective. This is a **partial pass**, not Stage 4 promotion. No selector default change authorized. Next candidate work: fix referent precedence with focused offline tests, then rerun automated continuity and unknown-fee diagnostics. Increment 9 ON HOLD; stable `main` unchanged.
