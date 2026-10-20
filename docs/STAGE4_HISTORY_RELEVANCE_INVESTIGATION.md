@@ -25,3 +25,28 @@ Separate **history used to interpret genuinely referential follow-ups** from **h
 Before any permanent runtime change, require offline payload regression tests for both independent questions and true follow-ups, plus automated paired Ollama evaluations on multiple reasoning families. Capture privacy-safe structural diagnostics and control sampling when practical. A filter must not silently destroy memory or eliminate legitimate conversational continuity.
 
 **Governance:** This is investigation plus tests only. Stage 4 NOT PASSED; Increment 9 ON HOLD; stable `main` unchanged. The user should not need another manual eight-session procedure.
+
+## Opt-in prototype — pending local validation
+
+The feature branch now contains a **conservative, explicitly opt-in** selector in `conversational_intelligence.select_stage4_history`. Set `ALFI_STAGE4_SELECTIVE_HISTORY=1` to use it; without that flag the prior default history behavior remains unchanged. `ALFI_DIAGNOSTIC_NO_HISTORY=1` retains precedence for complete diagnostic isolation. No stored memory/history is erased or rewritten by the selector.
+
+- Independent questions receive no raw prior dialogue.
+- Explicit referential follow-ups, recognized corrections, and a small set of history-recall requests receive up to five prior exchanges.
+- Unresolved referents are not invented by the selector.
+- The selector is deliberately narrow and **not a comprehensive intent classifier**. Natural follow-ups outside the recognized forms may lose context; this is a known limitation, not a validated production fix.
+- Existing model generation, response policy, and stored-history logic are otherwise unchanged.
+
+Offline tests in `tests/test_stage4_history_characterization.py` cover selection, bounds, nonmutation, and follow-up preservation. The existing automated diagnostic harness accepts `--selective` to compare default vs opt-in selective history with alternating order, no eight manual interactive launches:
+
+```bash
+cd ~/ALFI
+git switch feature/alfi-1.6-conversational-intelligence
+git pull --ff-only
+python3 -m py_compile first_ai.py conversational_intelligence.py tools/stage4_history_diagnostic.py tests/test_stage4_history_characterization.py
+python3 -m unittest discover -s tests -v
+python3 tools/stage4_history_diagnostic.py --selective --output stage4_selective_report.json
+```
+
+The report contains model answers; review before sharing. The harness snapshots existing history without writing it and uses temporary AI memory. This comparison tests the narrow unknown-fee family only. **Do not enable the flag for ordinary use until follow-up continuity is also validated in live testing.** No local Mac or Ollama tests have been run by the remote author.
+
+**Status:** Experimental implementation only; Stage 4 NOT PASSED, Increment 9 ON HOLD, stable `main` unchanged.
