@@ -84,3 +84,24 @@ For **each** prompt, start fresh `ollama run gemma3:4b`, ask exactly once, captu
 Score each response 0/1/2, separately by environment, and review debug fields. These two paired observations remain exploratory because sampling settings and historical context are not fully matched. Do not promote Stage 4 or implement a targeted reasoning fix based solely on these results.
 
 **Governance:** Increment 8 closed; Stage 3 provisionally approved; Stage 4 under assessment; Increment 9 on hold; stable `main` untouched.
+
+## C2/C3 operator results and ruling — 2026-10-19
+
+Operator confirmed local syntax compilation and **124/124 automated tests passed** after regression syntax fix at `86baba7`. Automated success does not establish live model reasoning.
+
+| Case | Direct Ollama | A.L.F.I. | Key observation |
+|---|---|---|---|
+| C1 museum | 2/2 | 0/2 | Direct `$14+b`; A.L.F.I. claims exact $14 |
+| C2 community center | 2/2 | 0/2 | Direct `$36+s`; A.L.F.I. claims exact $36 |
+| C3 garden store | 1/2 | 0/2 | Direct explains `$30+d` and unknown charge, **but final boxed answer is $30**; A.L.F.I. claims exact $30 |
+| **Total** | **5/6** | **0/6** | All A.L.F.I. answers initial generation, no retries |
+
+**C2 debug:** `gemma3:4b`; roles `system,user,assistant,user,assistant,user,assistant,user,assistant,user,assistant,system,user`; 13 messages; 5 history pairs; 0 structured-memory matches; 2 system messages; original user question; Ollama defaults; no format violation or retry. A.L.F.I. says exact amount $36 while surcharge remains unspecified.
+
+**C3 debug:** `gemma3:4b`; roles `system,system,user,assistant,user,assistant,user,assistant,user,assistant,user,assistant,system,user`; 14 messages; 5 history pairs; 1 structured-memory match; 3 system messages; original user question; Ollama defaults; no format violation or retry. A.L.F.I. says exact $30 while delivery remains undefined.
+
+**Interpretation:** Structured-memory retrieval is not necessary for the failure (C2 has zero matches). Historical context is present in both runs, but its contents and causal effect are unverified. Direct Gemma's C3 reasoning/final-answer inconsistency shows the base model can also fail this pattern. Direct CLI versus A.L.F.I. still differs in prompts, history, and potentially generation parameters; a paired result is not a causal isolation. C2/C3 are not delayed retention tests and do not establish model-weight learning.
+
+**Recommended next diagnostic, pending operator authorization:** Non-destructive, reversible *ephemeral* context-isolation experiment with saved history left intact: compare same-model requests with no history versus the usual last five turns, controlling system instructions and decoding as closely as practical. Do not use `/clearhistory` or edit persistent files. Capture only aggregate prompt-source diagnostics; avoid logging private history. A second step can isolate the policy system message and explicit generation options if necessary.
+
+**Governance:** Stage 4 **NOT PASSED**; Stage 3 provisionally approved; Increment 8 closed; Increment 9 on hold. No reasoning code changes or memory edits authorized. Stable `main` untouched.
