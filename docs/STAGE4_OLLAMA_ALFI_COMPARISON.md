@@ -105,3 +105,16 @@ Operator confirmed local syntax compilation and **124/124 automated tests passed
 **Recommended next diagnostic, pending operator authorization:** Non-destructive, reversible *ephemeral* context-isolation experiment with saved history left intact: compare same-model requests with no history versus the usual last five turns, controlling system instructions and decoding as closely as practical. Do not use `/clearhistory` or edit persistent files. Capture only aggregate prompt-source diagnostics; avoid logging private history. A second step can isolate the policy system message and explicit generation options if necessary.
 
 **Governance:** Stage 4 **NOT PASSED**; Stage 3 provisionally approved; Increment 8 closed; Increment 9 on hold. No reasoning code changes or memory edits authorized. Stable `main` untouched.
+
+## H1 history-isolation operator results — 2026-10-19
+
+Operator pulled development branch through `2206ad0`. Python syntax compilation succeeded and **125/125 automated tests passed** (0.028 seconds), including `test_diagnostic_history_exclusion_is_ephemeral`.
+
+**H1 prompt:** A workshop charges $8 for each seat. A separate materials fee applies, but its amount is unspecified. What is the exact total for three seats including materials? Expected: known subtotal $24; exact numerical total unknown ($24 + unspecified materials fee).
+
+- **Normal history: 0/2.** `prompt_history_mode: normal`, 13 messages, 5 history pairs, 0 saved-memory matches, 2 system messages, original user question, Ollama defaults. Initial and final response incorrectly claimed the exact total including unspecified materials was $24. No format violation or corrective retry.
+- **History excluded: 2/2.** `prompt_history_mode: excluded`, 3 messages, 0 history pairs, 0 saved-memory matches, 2 system messages, original user question, Ollama defaults. Initial and final response correctly distinguished the $24 seat subtotal from the unknown total including materials. No format violation or corrective retry.
+
+**Assessment:** This single within-prompt contrast strengthens the historical-context-interference hypothesis but does not prove causation: generation variability remains possible, and the normal first run records H1 before the second run (though history is excluded from its model prompt). Earlier direct Ollama C3 showed a base-model final-answer error. Do not promote Stage 4 or implement a reasoning fix based on one isolation pair. Recommend preregistered additional held-out A/B trials with counterbalanced order and repeated runs; maintain original history and avoid memory deletion. Operator authorization needed for further implementation changes.
+
+**Governance:** Stage 4 NOT PASSED; Increment 9 ON HOLD; stable `main` untouched.
