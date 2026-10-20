@@ -87,3 +87,16 @@ For each R1/R2 final follow-up: **2** = correct most-recent referent and substan
 Capture: timestamp, HEAD, model, environment switches, each exact prompt/initial answer, format/retry diagnostics, teaching and correction text, 0/1/2 scores, reasons, and next action. Do not claim improvement from repeated previously seen prompts or from a single coached session.
 
 **Stop after R2 and send the transcript for review.** Retention and transfer should use fresh unseen variants designed after the review, preserving the holdout. No runtime edits or changes to stable `main`.
+
+
+## C1 observed teaching and practice — operator transcript 2026-10-20
+
+Operator launched `ALFI_DEBUG=1 ALFI_OLLAMA_MODEL=gemma3:4b ALFI_STAGE4_SELECTIVE_HISTORY=1 python3 first_ai.py` after fast-forwarding to `eccbdcb`. Transcript contains Teach and P1/P2 only; **no corrective feedback, R1/R2 retests, delayed retention, or transfer**. All seven model responses were initial generations, no retries, no saved-memory matches.
+
+- **Teach (unscored):** A.L.F.I. correctly paraphrased the rule: prioritize most recent question/answer and clarify ambiguous follow-ups. The instruction itself was processed in `selective_independent` mode (zero history pairs). Paraphrase does not establish skill acquisition.
+- **P1 clouds → bookstore $7 × 2 + unspecified wrapping fee:** Independent bookstore response correctly gave $14 plus unknown fee. However, `Explain that last answer.` was classified `selective_independent`, with **zero history pairs** and `prompt_user_question: original`. A.L.F.I. replied with an unrelated description of its own architecture. **Practice score 0/2** on follow-up. This is a prompt-context routing limitation: the selected history was not supplied for a genuine referential request. Do not attribute the failure solely to learning.
+- **P2 tree roots → pool chlorine → `Why is that important?`:** Follow-up was `selective_referential`, with five history pairs and a resolved question. A.L.F.I. correctly stayed with pool sanitation, but repeated its preceding scientifically incorrect claim that chlorine generally converts organic matter into chlorine dioxide. **Practice score 1/2** for topic relevance with material factual error. Actual pool sanitation primarily involves hypochlorous acid/hypochlorite chemistry; the erroneous detail should be corrected in a separate factual lesson, not silently accepted.
+- **Scores:** P1 0/2; P2 1/2; coached practice subtotal **1/4**. Teaching acknowledgment unscored. This is **not** an uncoached promotion score.
+- **Next action:** Investigate why `Explain that last answer.` is not included in the selector's referential patterns. A focused, authorized selector fix with regression coverage is an engineering candidate; do not modify the default runtime without separate scope approval. Operator should give corrective feedback and then execute unseen R1/R2; preserve the already published holdout prompts. Do not infer retention or transfer.
+
+Stage 4 remains under assessment; Increment 9 on hold; stable main unchanged.
