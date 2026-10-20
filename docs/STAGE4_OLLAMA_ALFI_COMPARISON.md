@@ -145,3 +145,21 @@ Ask the exact case question once, capture complete response and debug fields, th
 **Scoring:** 2/2 = correct known subtotal **and** explicitly refuses an exact numeric total due to unknown fee; 1/2 = recognizes unknown fee but final answer is inconsistent, or subtotal arithmetic is wrong while uncertainty is correctly handled; 0/2 = claims known subtotal is the exact total or otherwise ignores unknown fee. Score initial generation separately from any corrective retry. Compare four matched normal/excluded pairs; report counts and score difference, individual exceptions, memory-match counts, order effects, and whether the evidence justifies further investigation. **No automatic promotion, no reasoning fix, and no permanent history-policy change** on these results alone.
 
 **Governance:** Increment 8 closed; Stage 3 provisionally approved; Stage 4 under assessment and NOT PASSED; Increment 9 on hold; stable `main` unchanged.
+
+## H2–H5 operator results — 2026-10-20
+
+Operator reports successful syntax compilation and **125/125 automated tests passed**. Eight fresh-process A.L.F.I. transcripts were supplied in the preregistered H2–H5 order, alternating which history condition ran first.
+
+| Case | Normal history (five pairs) | History excluded (zero pairs) | Order |
+|---|---:|---:|---|
+| H2 bicycle rental ($22 + fee) | 0/2 — falsely exact $22 | 2/2 — states $22 subtotal and exact total unknown | normal → excluded |
+| H3 theater tickets ($39 + charge) | 0/2 — $39 stated as total, service charge omitted | 2/2 — states $39 subtotal and exact total unknown | excluded → normal |
+| H4 printing shop ($28 + fee) | 0/2 — falsely total $28 | 2/2 — states $28 plus unknown fee, exact total unknown | normal → excluded |
+| H5 ferry tickets ($30 + fee) | 0/2 — $30 stated as total, terminal fee excluded | 2/2 — states $30 plus unspecified terminal fee, exact total unknown | excluded → normal |
+| **Total** | **0/8** | **8/8** | counterbalanced |
+
+Including H1, matched results are **0/10 normal vs 10/10 excluded**. All eight H2–H5 runs report `gemma3:4b`, `prompt_saved_memory_matches: 0`, `prompt_user_question: original`, `prompt_generation_options: ollama_defaults`, `format_violation: none`, `corrective_retry: not_needed`, `final_source: initial_generation`. Normal mode: 13 messages, 5 history pairs, 2 system messages; excluded mode: 3 messages, 0 history pairs, 2 system messages. H2 excluded response contains an internally awkward phrase suggesting the equipment fee is included in the $22 calculation, but expressly says the exact total cannot be determined; it meets the preregistered 2/2 rule with this caveat.
+
+**Inference:** This is a strong replicated association between injected history and failure on the unknown-fee question family, robust to alternated order. It is not a definitive causal attribution to particular prior turns, a general reasoning benchmark, or a demonstration of model-weight learning. No permanent context policy or reasoning fix is authorized by these results alone. To reduce operator burden, next diagnostic should be a local automated harness with fixed prompts, controlled model options where practical, non-destructive history snapshots, and redacted/aggregated reporting; require separate approval for implementation.
+
+**Governance:** Stage 4 NOT PASSED; Increment 9 ON HOLD; stable `main` unchanged.
