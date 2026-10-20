@@ -39,3 +39,15 @@ For a stronger comparison later, use multiple new held-out variants, repeated fr
 ## Governance
 
 Stage 3 provisionally approved; Stage 4 under assessment; Increment 8 closed; Increment 9 on hold; stable `main` untouched. **No code changes or persistent-memory edits authorized by this plan.**
+
+## C1 results and read-only prompt-path inspection — 2026-10-19
+
+**Operator transcript:** Direct `ollama run gemma3:4b` returned ticket subtotal $14 and exact-total expression `$14 + b`, explaining that the unknown booking fee prevents a numeric exact total: **2/2**. A.L.F.I. via `ALFI_DEBUG=1 ALFI_OLLAMA_MODEL=gemma3:4b python3 first_ai.py` said the exact total *including* the unspecified fee was $14 while acknowledging the fee remained undetermined: **0/2**. Debug trace confirms `initial_generation`, `format_violation: none`, `corrective_retry: not_needed`. The joined command `ollama listollama run gemma3:4b` failed before the valid direct invocation and did not affect either answer.
+
+**Read-only source inspection:** `first_ai.py` `generate()` builds a system prompt, appends up to three relevant structured memories as another system message, injects up to five saved user/assistant history pairs, appends `response_policy(...)` as a further system message, and sends the resolved user question to `http://127.0.0.1:11434/api/chat` with `stream: false`. It does not explicitly set `options`/temperature in the observed request construction. The system prompt says to be accurate and acknowledge uncertainty. `conversational_intelligence.py` `response_policy()` says answer accurately, distinguish established/hypothetical results, and prefer a short paragraph; `precision_guidance()` supplies generic technical-terminology guidance. `contextual_subject()` applies only to a narrowly matched importance question, not the museum prompt. No specific instruction to set unspecified quantities to zero was found in these reviewed static code paths.
+
+**Conclusion:** The contrast supports a prompt/context/settings investigation, **not** a proven application defect. Exact model digest, decoding options, injected local memory/history, and final request payload were not captured. The direct CLI answer was substantially longer, another sign the environments differ. The current debug trace logs the selected model and answer, not the complete outgoing messages.
+
+**Next diagnostic recommendation:** Without changing code or deleting history, capture a **redacted** list of the final Ollama message roles and sources and whether structured-memory matches/history were included; do not print private memory values. Then run several preregistered novel variants with matched generation options if feasible. Do not implement a rule-specific fix or open Increment 9 based on one paired observation.
+
+**Governance:** Stage 4 under assessment, not promoted; Stage 3 provisionally approved; Increment 8 closed; Increment 9 on hold; stable `main` unchanged. No code or memory changes made in this review.
