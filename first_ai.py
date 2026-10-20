@@ -4,6 +4,7 @@ import math
 import os
 import random
 import re
+import sys
 import urllib.error
 import urllib.request
 from collections import Counter
@@ -39,6 +40,7 @@ class ALFI:
         self.history = self.load_history()
         self.last_topic = None
         self.last_source = None
+        self.debug = os.environ.get("ALFI_DEBUG", "").lower() in ("1", "true", "yes")
 
     def load(self):
         if not self.memory_file.exists():
@@ -195,10 +197,16 @@ class ALFI:
         words = set(tokenize(message))
         return bool(words & {"you", "your"}) and bool(words & {"learn", "learned", "remember"}) and bool(words & {"permanently", "permanent", "conversation", "new"})
 
+    def diagnostic(self, event, value):
+        """Optional ephemeral diagnostics; never write prompts or answers to disk."""
+        if self.debug:
+            print(f"[ALFI DEBUG] {event}: {value}", file=sys.stderr)
+
     def generate(self, message):
         """Ask the local Ollama model without automatically teaching the answer."""
         if not self.use_ollama:
             return "I don't know that yet. Use /teach to help me learn."
+        self.diagnostic("model", self.ollama_model)
         messages = [{"role": "system", "content": (
             "You are A.L.F.I. (Artificial Lifeform — First Iteration), "
             "a helpful local AI assistant. Be concise, accurate, and acknowledge uncertainty. "
@@ -248,7 +256,10 @@ class ALFI:
                 answer = answer.strip()
                 issue = factual_revision_guidance(message, answer)
                 format_issue = format_violation(message, answer)
+                self.diagnostic("initial_response", repr(answer))
+                self.diagnostic("format_violation", format_issue or "none")
                 if response_needs_revision(message, answer) or issue:
+                    self.diagnostic("corrective_retry", "triggered")
                     revision_messages = messages + [
                         {"role": "assistant", "content": answer},
                         {"role": "user", "content": ("Revise the previous answer without repeated steps. Preserve factual meaning and caveats. " + issue + " " + format_issue + (" Use at most two short sentences, no list." if "brief" in message.lower() and not format_issue else " Keep the answer focused and concise."))},
@@ -260,11 +271,17 @@ class ALFI:
                         with urllib.request.urlopen(retry_request, timeout=90) as retry_response:
                             retry_result = json.load(retry_response)
                         candidate = retry_result.get("message", {}).get("content", "")
+                        self.diagnostic("retry_response", repr(candidate))
                         if (isinstance(candidate, str) and candidate.strip() and not response_needs_revision(message, candidate)
                                 and not factual_revision_guidance(message, candidate)):
+                            self.diagnostic("final_source", "corrective_retry")
                             return candidate.strip()
-                    except (urllib.error.URLError, TimeoutError, OSError, ValueError, KeyError):
-                        pass
+                    except (urllib.error.URLError, TimeoutError, OSError, ValueError, KeyError) as retry_error:
+                        self.diagnostic("retry_error", str(retry_error))
+                    self.diagnostic("final_source", "initial_generation (retry rejected or unavailable)")
+                else:
+                    self.diagnostic("corrective_retry", "not_needed")
+                    self.diagnostic("final_source", "initial_generation")
                 return answer
             return "The local model returned an empty response. Please try again."
         except (urllib.error.URLError, TimeoutError, OSError, ValueError, KeyError) as exc:
