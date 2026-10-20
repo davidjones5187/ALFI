@@ -207,6 +207,10 @@ class ALFI:
         if not self.use_ollama:
             return "I don't know that yet. Use /teach to help me learn."
         self.diagnostic("model", self.ollama_model)
+        # Diagnostic-only context isolation; does not alter stored history.
+        history_enabled = os.environ.get("ALFI_DIAGNOSTIC_NO_HISTORY") != "1"
+        context_history = self.recent_history(5) if history_enabled else []
+        self.diagnostic("prompt_history_mode", "normal" if history_enabled else "excluded")
         messages = [{"role": "system", "content": (
             "You are A.L.F.I. (Artificial Lifeform — First Iteration), "
             "a helpful local AI assistant. Be concise, accurate, and acknowledge uncertainty. "
@@ -221,14 +225,14 @@ class ALFI:
         if relevant:
             facts = "\n".join(f"{item['kind']} ({item['key']}; source: {item['source']}): {item['value']}" for item in relevant)
             messages.append({"role": "system", "content": "User-provided saved memories, not independently verified:\n" + facts})
-        for turn in self.recent_history(5):
+        for turn in context_history:
             if isinstance(turn, dict):
                 user, answer = turn.get("user"), turn.get("assistant")
                 if isinstance(user, str) and isinstance(answer, str):
                     messages.extend([{"role": "user", "content": user},
                                      {"role": "assistant", "content": answer}])
         if "example" in tokenize(message):
-            for turn in reversed(self.recent_history(5)):
+            for turn in reversed(context_history):
                 if isinstance(turn, dict) and isinstance(turn.get("user"), str):
                     prior = turn["user"]
                     if "example" not in tokenize(prior):
@@ -236,10 +240,10 @@ class ALFI:
                                          "The current subject is: " + prior +
                                          ". Give a concrete external example, not an account of your own learning."})
                         break
-        messages.append({"role": "system", "content": response_policy(message, self.recent_history(5))})
-        resolved = resolve_followup(message, self.recent_history(5))
+        messages.append({"role": "system", "content": response_policy(message, context_history)})
+        resolved = resolve_followup(message, context_history)
         if not resolved:
-            subject = contextual_subject(message, self.recent_history(5))
+            subject = contextual_subject(message, context_history)
             if subject:
                 resolved = "Why is the subject of this earlier question important? " + subject
         messages.append({"role": "user", "content": resolved or message})
