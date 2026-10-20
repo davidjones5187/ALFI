@@ -272,3 +272,36 @@ class HistoryGroundingRegressionTests(unittest.TestCase):
             ]
             answer = ai.respond("What did I ask you about the book in our earlier conversation?")
             self.assertIn("can't find", answer)
+
+class Increment8DiagnosticTests(unittest.TestCase):
+    def test_debug_off_by_default(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with patch.dict("first_ai.os.environ", {"ALFI_DEBUG": "0"}):
+                ai = ALFI(Path(folder) / "memory.json")
+            fake = io.BytesIO(json.dumps({"message": {"content": "7"}}).encode())
+            with patch("first_ai.urllib.request.urlopen", return_value=fake), patch("first_ai.sys.stderr", new_callable=io.StringIO) as err:
+                self.assertEqual(ai.generate("Answer with just the number: 12 minus 5?"), "7")
+            self.assertEqual(err.getvalue(), "")
+
+    def test_debug_reports_first_attempt_without_retry(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with patch.dict("first_ai.os.environ", {"ALFI_DEBUG": "1"}):
+                ai = ALFI(Path(folder) / "memory.json")
+            fake = io.BytesIO(json.dumps({"message": {"content": "7"}}).encode())
+            with patch("first_ai.urllib.request.urlopen", return_value=fake) as call, patch("first_ai.sys.stderr", new_callable=io.StringIO) as err:
+                self.assertEqual(ai.generate("Answer with just the number: 12 minus 5?"), "7")
+            self.assertEqual(call.call_count, 1)
+            self.assertIn("initial_generation", err.getvalue())
+            self.assertIn("not_needed", err.getvalue())
+
+    def test_debug_reports_corrective_retry(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with patch.dict("first_ai.os.environ", {"ALFI_DEBUG": "1"}):
+                ai = ALFI(Path(folder) / "memory.json")
+            answers = [io.BytesIO(json.dumps({"message": {"content": "Seven."}}).encode()),
+                       io.BytesIO(json.dumps({"message": {"content": "7"}}).encode())]
+            with patch("first_ai.urllib.request.urlopen", side_effect=answers) as call, patch("first_ai.sys.stderr", new_callable=io.StringIO) as err:
+                self.assertEqual(ai.generate("Answer with just the number: 12 minus 5?"), "7")
+            self.assertEqual(call.call_count, 2)
+            self.assertIn("corrective_retry: triggered", err.getvalue())
+            self.assertIn("final_source: corrective_retry", err.getvalue())
