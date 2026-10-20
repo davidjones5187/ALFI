@@ -179,3 +179,23 @@ python3 tools/stage4_history_diagnostic.py --output stage4_diagnostic_report.jso
 The output path must not already exist and cannot be the history file. The script executes **eight Ollama requests** and may take time; no need to manually launch/quit eight sessions. Grade outputs manually against the rubric; there is no automated promotion or pass assertion. Generation uses Ollama defaults, so repeatability is limited. The runner is diagnostic infrastructure, not a reasoning correction or permanent history policy.
 
 **Governance:** Stage 4 NOT PASSED, Increment 9 ON HOLD, stable `main` unchanged.
+
+## D1–D4 automated harness results — operator report 2026-10-20
+
+Source: user-supplied `stage4_diagnostic_report.json`, created `2026-10-20T03:18:45.032088+00:00`. Model `gemma3:4b`; history snapshot 100 pairs. The operator previously reported **128/128 automated tests passing** and successful completion of eight harness runs.
+
+| Case | Normal history | Excluded history | Order |
+|---|---|---|---|
+| D1 repair shop: $24 + diagnostic fee | **0/2**: says exact total is $24 despite fee being undefined | **2/2**: $24 plus unknown fee | normal → excluded |
+| D2 swimming pool: $28 + surcharge | **0/2**: says exact total is $28, excludes surcharge | **2/2**: exact total unknown, $28 plus surcharge | excluded → normal |
+| D3 bakery: $30 + packaging | **0/2**: says exact total including packaging is $30, excludes unknown fee | **2/2**: exact total indeterminate, $30 subtotal | normal → excluded |
+| D4 museum workshop: $42 + supplies | **0/2**: says exact total including supplies is $42 despite unknown fee | **2/2**: $42 plus unknown supplies fee, exact total unavailable | excluded → normal |
+| **Total** | **0/8** | **8/8** | alternated |
+
+Every run reports no saved-memory matches, original user question, Ollama defaults without seed, no format violation, no corrective retry, and final answer from initial generation. Normal: 13 prompt messages, five history pairs, two system messages. Excluded: three prompt messages, zero history pairs, two system messages. No source history content was included in the report.
+
+**Cumulative matched unknown-fee question family H1–H5 + D1–D4:** normal **0/18**, excluded **18/18** across nine matched questions. Strong replicated association with history injection under these conditions, not a general Stage 4 pass or proof of a particular history item's causal role. The harness constructs temporary memory and uses `generate()` directly; this is a controlled diagnostic, not an exact production-equivalent memory path. Generation remains unseeded.
+
+**Recommended next phase (not implemented):** examine history relevance, possible answer contamination from repetitive prior question/answer patterns, and bounded selective context injection; evaluate on both unknown-fee tasks and genuine follow-up tasks before any permanent change. Preserve existing stored history and memory.
+
+**Governance:** Stage 4 NOT PASSED. Increment 9 ON HOLD. No changes to stable `main` or normal reasoning behavior.
