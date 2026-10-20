@@ -98,3 +98,15 @@ Source: user-uploaded `stage4_continuity_report.json` created `2026-10-20T03:36:
 **Source-path hypothesis (not yet instrumentally proven):** `contextual_subject` in `conversational_intelligence.py` skips recent substantive user questions that do not begin with `explain`, `describe`, `what is`, `what are`, or `tell me about`. It can therefore select the earlier `Explain the water cycle.` over the newer museum question when the user says `Why is it important?`. The observed T2 result is consistent with that behavior; inspect `response_policy`, `resolve_followup`, and `contextual_subject` jointly before changing code. A second independent issue is the false exact-total claim in selective T2 despite history exclusion.
 
 **Ruling:** Straightforward follow-up continuity 2/2 selective; topic-switch continuity 1/2 selective. This is a **partial pass**, not Stage 4 promotion. No selector default change authorized. Next candidate work: fix referent precedence with focused offline tests, then rerun automated continuity and unknown-fee diagnostics. Increment 9 ON HOLD; stable `main` unchanged.
+
+
+## Second automated continuity report — 2026-10-20 04:14 UTC
+
+Operator submitted `stage4_continuity_report_run2.json` (24 turns, eight three-turn sequences, `gemma3:4b`, Ollama unseeded defaults, synthetic in-memory history, zero saved-memory matches, all initial generations without retries). This repeats the **same** prompts as run 1, so it measures run-to-run consistency, not novel transfer or learning.
+
+- **F1 photosynthesis:** Both conditions correctly stay on topic. The final "Give me another example" response in each condition mostly restates the mechanism without giving a clear new example: **partial credit on final turn**.
+- **F2 firewall:** Both conditions maintain subject across turns; the final "Tell me more" largely repeats existing explanation rather than deepening it: consider partial credit for depth, despite correct referent.
+- **T1 helmet → theater fee → "Explain that":** Both conditions correctly identify $27 subtotal and unknown booking fee; final explanation correctly stays with theater. Normal condition's run-1 contradictory "$36" claim does not recur.
+- **T2 water cycle → museum fee → "Why is it important?":** Both conditions correctly compute $24 + unknown charge on second turn, but **both revert to water cycle on final turn**, reproducing run 1's wrong-referent behavior. Because "it" is semantically ambiguous after a calculation, test an explicitly anchored follow-up as well before concluding the routing code alone is at fault.
+
+**Scenario-level outcome** (correct subject continuity, with answer-completeness caveats): F1 normal/selective pass/pass; F2 pass/pass; T1 pass/pass; T2 fail/fail. Across both reports, normal scenario passes 5/8, selective passes 6/8. These small repeated prompts are not statistically independent and do not establish a reliability rate. Stage 4 remains under assessment; investigate referent precedence with code inspection and unseen contrastive prompts. No authorization to change default selector or open Increment 9.
