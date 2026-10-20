@@ -46,3 +46,22 @@ Score each trial 0/1/2 per `docs/DEVELOPMENTAL_EDUCATION.md`. Report separately:
 ## Decision boundary
 
 **Operator authorized live Stage 4 assessment on 2026-10-19.** This authorizes Session T1 testing and subsequent evaluation under this protocol, but **not** changing application code, clearing memories, storing new persistent test rules without a specific instruction, opening Increment 9, or modifying stable `main`. The proposed T2/T3 exact protocols remain to be finalized after reviewing T1. No live results have yet been supplied.
+
+## T1 observed results — 2026-10-19
+
+Operator reported backup directory `/Users/davidjones/ALFI-stage4-backup-20261019-183414` and local HEAD `4fcd475`. Backup contents were not independently listed. The attempted command `ollama listALFI_DEBUG=1 ...` returned an Ollama unknown-command error because shell commands were joined; the subsequent standalone `ALFI_DEBUG=1 ALFI_OLLAMA_MODEL=gemma3:4b python3 first_ai.py` launched successfully. Session ended with `/quit`.
+
+All six prompts produced `initial_generation`, `format_violation: none`, `corrective_retry: not_needed`; no retries.
+
+| Probe | Observed result | Score | Finding |
+|---|---|---:|---|
+| T1.1 unknown silver value | Cannot determine without defined point conversion | 2/2 | Correct uncertainty |
+| Teaching (unscored) | Correct purple 3 points, but falsely asserted yellow has **assigned value zero** | N/A | **First appearance of critical misconception** |
+| T1.2 four purple | 12 points | 2/2 | Correct application |
+| T1.3 two purple | 6 points | 2/2 | Correct novel quantity |
+| T1.4 two purple + one yellow | Incorrectly computed `6 + 0 = 6`; yellow remains unassigned | 0/2 | **Failed unknown-versus-zero distinction**; correct answer `6 + y`, exact total unknown |
+| T1.5 three purple claimed 12 | Rejects claim; 9 points | 2/2 | Correct contradiction check |
+
+**T1: 8/10 (80%)**, four scored passes and one substantive failure. Do not call Stage 4 passed or infer persistent learning. The failure began in the response to teaching and recurred at mixed-value application, without corrective retry. This is one failed concept manifested twice in one session, not two independent scored trials.
+
+**Next diagnostic:** before any teaching, code changes, or T2 retention claims, conduct one fresh-process uncoached novel variant distinguishing **unassigned** from **zero**. Proposed prompt: `In a new game, each blue chip is worth 4 points. The value of a green chip has not been specified. What is the exact total for two blue chips and one green chip?` Expected: cannot determine exact total; known subtotal 8, total `8 + green value`. Do not give expected answer to A.L.F.I. No memory clearing; existing history remains a confounder. Evaluate the transcript before finalizing T2/T3. Increment 8 closed, Stage 3 provisionally approved, Increment 9 on hold, stable `main` unchanged.
