@@ -114,3 +114,14 @@ Operator continued the **same** A.L.F.I. process, delivered both planned correct
 - **Engineering diagnosis:** Strong repeated evidence that the opt-in selector excludes genuinely referential phrases such as `Explain that last answer.` and `Explain your answer.`, while recognizing `Why is that important?` and `Why does that matter?`. This is an identifiable prompt-assembly limitation; cannot infer that A.L.F.I. failed to learn solely from R1. Evaluate a narrowly scoped selector change with unit and live regression tests **only upon operator authorization**. Keep default runtime unchanged and do not touch stable `main`.
 
 **Decision:** C1 completed through Retest; not passed for promotion. Next: operator decision on selector fix versus a diagnostic normal-history control, then delayed retention and genuinely novel transfer prompts. Increment 9 on hold.
+
+
+## Post-fix live regression — operator results, 2026-10-20
+
+**Separate evidence, not a regrade of original C1.** On the opt-in `ALFI_STAGE4_SELECTIVE_HISTORY=1` branch after selector change (latest code/test commit `2fd905a7`), operator reports `Ran 143 tests ... OK` (143/143). Fresh A.L.F.I. process using `gemma3:4b`, `ALFI_DEBUG=1`, model defaults:
+
+- Bookstore: two $7 notebooks plus unspecified wrapping fee. Independent first answer correctly gives $14 subtotal, exact total unknown. `Explain that last answer.` now reports `selective_referential`, five history pairs, no saved memory matches, no corrective retry; initial answer correctly explains $14 plus unspecified fee. **Live regression 2/2** for answer relevance and correctness.
+- Train station: three $8 lockers plus unspecified reservation charge. Independent first answer correctly gives $24 subtotal, exact total unknown. `Explain your answer.` now reports `selective_referential`, five history pairs, no saved memory matches, no corrective retry; initial answer correctly explains $24 plus unspecified fee. **Live regression 2/2**.
+- Both follow-up prompts retained `prompt_user_question: original`; history injection, not rewriting, supplied context. No memory clearing or reset demonstrated. Process remains open at `You:` in shared transcript; do not claim `/quit`.
+- The original C1 coached P1 0/2, P2 1/2 and uncoached R1 0/2, R2 2/2 remain unchanged. Post-fix 4/4 is a **regression check**, not proof of model-weight learning, delayed retention, or novel transfer.
+- Narrow result: The two previously missed phrases are now routed to history and answered correctly in one live run. No claim that all referential phrases or topical history filtering are solved. Stable `main` unchanged; Increment 9 on hold; Stage 4 under assessment.
