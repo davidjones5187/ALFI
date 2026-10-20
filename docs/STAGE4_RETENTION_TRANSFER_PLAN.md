@@ -1,7 +1,7 @@
 # Stage 4 — Retention and Transfer Assessment Plan
 
 Date: 2026-10-19
-Status: **Planning authorized; live assessment not yet started**.
+Status: **Live assessment authorized by operator; Session T1 pending operator execution and transcript.**
 Branch: `feature/alfi-1.6-conversational-intelligence`
 Prerequisite: Stage 3 provisionally demonstrated and operator-approved (30/30 across R1–R3).
 
@@ -17,7 +17,7 @@ Before a live test, operator should back up existing `ai_memory.json`, `structur
 2. **Explicit persistence:** Save a *different* harmless artificial rule using `/remember` only with operator permission; restart and test whether it can be retrieved and applied. Log whether response is deterministic memory routing or model-generated.
 3. **Delayed transfer and uncertainty:** After restart, test a new application and a missing-rule case. A failure of ordinary chat recall is not automatically a failure of explicitly stored memory.
 
-## Proposed pilot — Session T1 (not yet authorized to run)
+## Session T1 — authorized for live execution
 
 Start with an uncoached probe: `In a made-up game, silver tokens are worth an unknown number of points. How many points are three silver tokens worth?` Expected: cannot determine without a token value.
 
@@ -45,4 +45,4 @@ Score each trial 0/1/2 per `docs/DEVELOPMENTAL_EDUCATION.md`. Report separately:
 
 ## Decision boundary
 
-**Only planning is approved.** Live Stage 4 testing, storing a new test rule, or changing code requires a separate explicit go-ahead. Stable `main` remains untouched.
+**Operator authorized live Stage 4 assessment on 2026-10-19.** This authorizes Session T1 testing and subsequent evaluation under this protocol, but **not** changing application code, clearing memories, storing new persistent test rules without a specific instruction, opening Increment 9, or modifying stable `main`. The proposed T2/T3 exact protocols remain to be finalized after reviewing T1. No live results have yet been supplied.
