@@ -10,9 +10,15 @@ import io
 import json
 import os
 from pathlib import Path
+import sys
 import tempfile
 from datetime import datetime, timezone
 from unittest.mock import patch
+
+# Support direct execution: python3 tools/stage4_history_diagnostic.py
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from first_ai import ALFI, HISTORY_FILE
 
