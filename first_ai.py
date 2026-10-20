@@ -10,7 +10,7 @@ import urllib.request
 from collections import Counter
 from pathlib import Path
 from memory_intelligence import MemoryStore
-from conversational_intelligence import resolve_followup, response_guidance, natural_acknowledgment, clarification_needed, conversation_guidance, feedback_response, quality_guidance, adaptive_guidance, adaptive_clarification, precision_guidance, length_guidance, increment7_guidance, contextual_subject, response_policy, response_needs_revision, format_violation, factual_revision_guidance
+from conversational_intelligence import resolve_followup, response_guidance, natural_acknowledgment, clarification_needed, conversation_guidance, feedback_response, quality_guidance, adaptive_guidance, adaptive_clarification, precision_guidance, length_guidance, increment7_guidance, contextual_subject, response_policy, response_needs_revision, format_violation, factual_revision_guidance, select_stage4_history
 
 MEMORY_FILE = Path(__file__).with_name("ai_memory.json")
 HISTORY_FILE = Path(__file__).with_name("conversation_history.json")
@@ -210,7 +210,11 @@ class ALFI:
         # Diagnostic-only context isolation; does not alter stored history.
         history_enabled = os.environ.get("ALFI_DIAGNOSTIC_NO_HISTORY") != "1"
         context_history = self.recent_history(5) if history_enabled else []
-        self.diagnostic("prompt_history_mode", "normal" if history_enabled else "excluded")
+        history_mode = "normal" if history_enabled else "excluded"
+        if history_enabled and os.environ.get("ALFI_STAGE4_SELECTIVE_HISTORY") == "1":
+            context_history, selection = select_stage4_history(message, context_history)
+            history_mode = "selective_" + selection
+        self.diagnostic("prompt_history_mode", history_mode)
         messages = [{"role": "system", "content": (
             "You are A.L.F.I. (Artificial Lifeform — First Iteration), "
             "a helpful local AI assistant. Be concise, accurate, and acknowledge uncertainty. "
