@@ -10,6 +10,7 @@ import unittest
 from unittest.mock import patch
 
 from first_ai import ALFI
+from conversational_intelligence import select_stage4_history
 
 
 class _FakeResponse:
@@ -36,6 +37,42 @@ class Stage4HistoryCharacterizationTests(unittest.TestCase):
             self.assertEqual(answer, "Model answer.")
             self.assertEqual(len(payloads), 1)
             return payloads[0]["messages"], ai.history
+
+    def test_selector_excludes_independent_question(self):
+        history = [{"user": "Explain planets.", "assistant": "Planets orbit stars."}]
+        selected, mode = select_stage4_history("What is 3 plus 4?", history)
+        self.assertEqual((selected, mode), ([], "independent"))
+        self.assertEqual(len(history), 1)
+
+    def test_selector_preserves_explicit_followup(self):
+        history = [{"user": "Explain photosynthesis.", "assistant": "Plants use sunlight."}]
+        selected, mode = select_stage4_history("Why is it important?", history)
+        self.assertEqual(mode, "referential")
+        self.assertEqual(selected, history)
+
+    def test_selector_missing_referent_does_not_invent_history(self):
+        selected, mode = select_stage4_history("Tell me more about that.", [])
+        self.assertEqual((selected, mode), ([], "referential_missing"))
+
+    def test_selector_bounds_referential_history(self):
+        history = [{"user": str(i), "assistant": str(i)} for i in range(12)]
+        selected, mode = select_stage4_history("Explain that.", history)
+        self.assertEqual(len(selected), 5)
+        self.assertEqual(selected[0]["user"], "7")
+
+    def test_selector_is_opt_in_and_changes_prompt_only(self):
+        history = [{"user": "Unrelated previous question", "assistant": "An old answer"}]
+        with patch.dict("os.environ", {"ALFI_STAGE4_SELECTIVE_HISTORY": "1"}):
+            messages, preserved = self._capture("What is 2 plus 2?", history, False)
+        self.assertEqual([m["role"] for m in messages], ["system", "system", "user"])
+        self.assertEqual(preserved, history)
+
+    def test_selector_followup_includes_context_when_enabled(self):
+        history = [{"user": "Explain photosynthesis.", "assistant": "Plants use sunlight."}]
+        with patch.dict("os.environ", {"ALFI_STAGE4_SELECTIVE_HISTORY": "1"}):
+            messages, preserved = self._capture("Why is it important?", history, False)
+        self.assertEqual(len([m for m in messages if m["role"] == "assistant"]), 1)
+        self.assertEqual(preserved, history)
 
     def test_independent_question_still_receives_five_unrelated_turns(self):
         history = [{"user": f"Earlier unrelated topic {i}", "assistant": f"Earlier response {i}"}
