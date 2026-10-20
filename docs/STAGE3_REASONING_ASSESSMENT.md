@@ -42,3 +42,17 @@ Status: **assessment opened, live results pending**. Increment 8 closed. Increme
 | R3.1–R3.5 | | | | |
 
 No conclusions are pre-scored. Score each trial after the operator supplies transcripts. Stage 3 remains under assessment until review.
+
+## Session R1 — observed results (2026-10-19)
+
+Operator confirmed development branch and fast-forward pull through commit `85e345c`, then started `ALFI_DEBUG=1 ALFI_OLLAMA_MODEL=gemma3:4b python3 first_ai.py`. Session completed with `/quit`. Existing history/memory was not cleared. All five responses were first-generation, with `format_violation: none`, `corrective_retry: not_needed`, and `final_source: initial_generation`.
+
+| Trial | Verbatim substance of response | Score | Assessment |
+|---|---|---:|---|
+| R1.1 | `9 - 4 = 5`; retains five stickers | 2/2 | Correct subtraction after giving away |
+| R1.2 | Four kilograms wool and bricks have equal mass/weight | 2/2 | Correct equal-quantity comparison |
+| R1.3 | Gravity causes ball to fall | 2/2 | Correct cause; minor imprecision conflates gravitational acceleration with force |
+| R1.4 | `5 + 2 = 7` apples | 2/2 | Correct addition |
+| R1.5 | Rabbit and turtle are animals; bicycle is mechanical | 2/2 | Correct categorization |
+
+**R1 total: 10/10 (100%); first-attempt 5/5; retries 0.** This is one restart-separated session relative to prior work, not an isolated clean-memory/model evaluation. Prior Stage 3 records showed errors on giving-away subtraction and equal-mass comparison; the different question sets and operating conditions prevent causal claims about learning. Sessions R2 and R3 remain pending. Do not advance Stage 3 or change code based on R1 alone. Increment 8 remains closed; Increment 9 on hold; `main` unchanged.
