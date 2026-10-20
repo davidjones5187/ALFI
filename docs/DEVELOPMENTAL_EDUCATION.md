@@ -142,3 +142,23 @@ User supplied direct `ollama run llama3.2:3b` and `ollama run gemma3:4b` transcr
 ## Gemma integration decision (2026-10-19)
 
 After the direct Ollama head-to-head, user authorized configurable integration. On feature branch only, `first_ai.py` defaults to `gemma3:4b`, supports `ALFI_OLLAMA_MODEL=llama3.2:3b` as a reversible fallback, and accepts an optional constructor model override. Both initial generation and revision retries use the selected model; error text names the selected model. New mock-based tests check the default, environment override, constructor override, and retry selection. README documents usage. **Remote code changes were committed but not executed locally or validated live.** Model selection does not itself rewrite existing memories, but normal interactive sessions continue to append conversation history; use isolation for a clean model comparison. Stable main remains untouched. Stage 3 remains under assessment, Increment 8 open, Increment 9 on hold.
+
+
+## Approved instructional cycle (2026-10-19)
+
+Operator approved **Teach → Practice → Correct → Retest → Retain → Transfer** for Stage 4 and later instruction.
+
+1. **Teach:** Explain one general principle and show a worked example. Preserve the exact lesson; the acknowledgment is unscored.
+2. **Practice:** Present two different examples. Capture initial answers and identify these as coached practice.
+3. **Correct:** Explain errors and the correct method. Keep original answers and grades; successful paraphrase is not proof of application.
+4. **Retest:** Present at least two previously unseen variants without hints. Score separately from baseline and coached practice.
+5. **Retain:** Test after a delay and process restart. Record whether relevant context was present or a rule was explicitly saved; mark N/A if untested.
+6. **Transfer:** Test novel situations with different wording and objects, including missing-information and conflicting-information cases.
+
+**Error policy:** Keep the existing 0/1/2 scoring, provisional 80% threshold, three sessions, two novel variants per skill, delayed Stage 4 check, and human transcript review. Minor omissions can earn 1/2; incorrect answers or wrong referents earn 0/2. Integrity-related failures require separate review regardless of averages. Category-specific thresholds previously discussed remain proposals, not adopted gates. Ordinary mistakes create opportunities for instruction and new trials, not automatic permanent disqualification.
+
+**Evidence separation:** Maintain distinct records for baseline, coached practice, uncoached post-instruction retest, delayed retention, and novel transfer. Never merge coached scores into the baseline or retroactively change previous grades. Log skill, prompts, initial answers, feedback, model/configuration, branch/commit, history and memory conditions, delay, score, evaluator, and decision (advance, reinforce, investigate architecture). Distinguish in-context adaptation, stored-memory retrieval, and model capability; do not claim model-weight learning from chat.
+
+**Initial lessons:** Unknown values are not zero; an unspecified required fee prevents an exact numeric total. Separately test whether follow-ups refer to the newest relevant subject after a topic switch. Previously used diagnostic prompts are not unseen test prompts.
+
+**Scope:** Documentation and curriculum only. No runtime/model changes, no memory deletion or unauthorized storage, no change to stable main. Stage 4 remains under assessment and Increment 9 remains on hold.
