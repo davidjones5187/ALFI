@@ -50,6 +50,29 @@ class Stage4HistoryCharacterizationTests(unittest.TestCase):
         self.assertEqual(mode, "referential")
         self.assertEqual(selected, history)
 
+    def test_selector_recognizes_explicit_previous_answer_requests(self):
+        history = [{"user": "Three lockers cost $24 plus an unknown fee.",
+                    "assistant": "The exact total is unknown."}]
+        for question in ("Explain your answer.", "Explain that last answer.",
+                         "explain your answer!", "Please explain your answer."):
+            with self.subTest(question=question):
+                selected, mode = select_stage4_history(question, history)
+                self.assertEqual(mode, "referential")
+                self.assertEqual(selected, history)
+
+    def test_selector_does_not_include_history_for_new_explanation(self):
+        history = [{"user": "Explain clouds.", "assistant": "Condensation."}]
+        selected, mode = select_stage4_history("Explain how batteries work.", history)
+        self.assertEqual((selected, mode), ([], "independent"))
+
+    def test_previous_answer_request_includes_context_in_prompt(self):
+        history = [{"user": "Three lockers cost $24 plus an unknown fee.",
+                    "assistant": "The exact total is unknown."}]
+        with patch.dict("os.environ", {"ALFI_STAGE4_SELECTIVE_HISTORY": "1"}):
+            messages, preserved = self._capture("Explain your answer.", history, False)
+        self.assertEqual(len([m for m in messages if m["role"] == "assistant"]), 1)
+        self.assertEqual(preserved, history)
+
     def test_selector_missing_referent_does_not_invent_history(self):
         selected, mode = select_stage4_history("Tell me more about that.", [])
         self.assertEqual((selected, mode), ([], "referential_missing"))
