@@ -47,3 +47,21 @@ B3 — Ambiguity requiring clarification:
 - Distinguish runtime prompt assembly, in-context adaptation, persistent-memory retrieval, and weight learning. Do not infer weight learning from responses.
 - Stage 4 remains UNDER ASSESSMENT regardless of one successful run. Further repeat sessions and targeted checks are required before any promotion decision.
 - After B3, enter `/quit` and share the full debug transcript and elapsed delay.
+
+
+## Operator results — 2026-10-20 (first execution)
+
+The operator supplied a complete terminal transcript. The earlier post-fix regression process ended with `/quit`; a new process launched with `ALFI_DEBUG=1 ALFI_OLLAMA_MODEL=gemma3:4b ALFI_STAGE4_SELECTIVE_HISTORY=1`. The operator completed A1–B3 without coaching and exited with `/quit`. All reported responses were initial generations, no corrective retries or format violations. Persistent history was not cleared; restart separation does not prove memory independence. Elapsed delay not established.
+
+**Phase A (3/4):**
+- **A1 1/2:** Repair shop two $16 inspections plus unspecified disposal fee: initial answer incorrectly calls $32 the total. Follow-up `Explain your answer.` is `selective_referential`, five history pairs, zero saved-memory matches; explains $32 as inspection subtotal and says fee excluded, but does not explicitly say exact combined total is unknown. Partial credit; separate initial-turn exact-total error.
+- **A2 2/2:** Reflective signs follow-up `Explain that last answer.` is `selective_referential`, five history pairs, zero saved-memory matches; correctly explains reflectivity and visibility after bird-feather topic shift. Some technical details about metallic coatings and amplification are imprecise but core topic and significance are correct.
+
+**Phase B (3/6):**
+- **B1 0/2:** Clinic two $18 forms plus unknown processing fee: initial answer erroneously gives $18 rather than $36 subtotal, though acknowledges unknown fee. `Why can't you give an exact figure?` classified `selective_independent`, zero history pairs, zero saved-memory matches; replies about AI probabilistic limitations, not fee. Clear routing failure plus distinct arithmetic error.
+- **B2 2/2:** `Go back to the smoke detector. Why is that important?` classified `selective_independent`, zero history pairs; nevertheless answers about smoke detectors and early fire warning. This is **explicit-referent comprehension**, not demonstrated earlier-history retrieval.
+- **B3 1/2 (conservative partial credit):** `Which one is more important?` after bicycle brake and light explanations classified `selective_independent`, zero history pairs. Asks which items, instead of identifying the two recent subjects or discussing context-dependent criteria. Clarification is safer than unsupported ranking, but context loss prevents full credit. Initial bicycle-light explanation incorrectly invokes phosphor/UV gas-discharge mechanism instead of common LEDs; separate factual error.
+
+**Total 6/10**, Phase A 3/4, Phase B 3/6. This is a small diagnostic, not a general success rate. C1 original and post-fix regression scores remain unchanged. Stage 4 NOT PASSED; Increment 9 ON HOLD; stable main unchanged.
+
+**Engineering follow-up candidate, not authorized here:** Selector must recognize additional genuinely referential constructions (`Why can't you give an exact figure?`, `Which one is more important?`) without injecting unrelated history for independent prompts. Test ambiguity and correct referent resolution, not just regex classification. Also examine arithmetic/uncertainty accuracy and factual knowledge separately; do not mistake fixes for model-weight learning.
