@@ -163,3 +163,19 @@ Including H1, matched results are **0/10 normal vs 10/10 excluded**. All eight H
 **Inference:** This is a strong replicated association between injected history and failure on the unknown-fee question family, robust to alternated order. It is not a definitive causal attribution to particular prior turns, a general reasoning benchmark, or a demonstration of model-weight learning. No permanent context policy or reasoning fix is authorized by these results alone. To reduce operator burden, next diagnostic should be a local automated harness with fixed prompts, controlled model options where practical, non-destructive history snapshots, and redacted/aggregated reporting; require separate approval for implementation.
 
 **Governance:** Stage 4 NOT PASSED; Increment 9 ON HOLD; stable `main` unchanged.
+
+## Automated read-only diagnostic harness — 2026-10-20
+
+Operator approved replacing tedious manual repeats with a small diagnostic runner. Added `tools/stage4_history_diagnostic.py` and offline `tests/test_stage4_diagnostic.py` on the **development branch only**. The runner snapshots `conversation_history.json` read-only, constructs A.L.F.I. using a temporary directory for memory, runs four held-out prompts twice (normal vs excluded, alternating order), calls `generate()` directly (never `respond()` or `record()`), and writes a new JSON report. It does **not** update or delete persistent history or saved memory. It does **not** import existing structured memory into the temporary instance, so these results isolate historical context without saved-memory matches; they are not full-production prompt equivalents. Reports include synthetic questions and generated answers, but not saved history text. Do not share reports without reviewing answer contents.
+
+**Operator verification required before running:** `cd ~/ALFI && git switch feature/alfi-1.6-conversational-intelligence && git pull --ff-only && python3 -m py_compile tools/stage4_history_diagnostic.py tests/test_stage4_diagnostic.py && python3 -m unittest discover -s tests -v`. Stop on failure. No local Mac execution has been observed yet.
+
+**Single command after passing tests:**
+
+```bash
+python3 tools/stage4_history_diagnostic.py --output stage4_diagnostic_report.json
+```
+
+The output path must not already exist and cannot be the history file. The script executes **eight Ollama requests** and may take time; no need to manually launch/quit eight sessions. Grade outputs manually against the rubric; there is no automated promotion or pass assertion. Generation uses Ollama defaults, so repeatability is limited. The runner is diagnostic infrastructure, not a reasoning correction or permanent history policy.
+
+**Governance:** Stage 4 NOT PASSED, Increment 9 ON HOLD, stable `main` unchanged.
