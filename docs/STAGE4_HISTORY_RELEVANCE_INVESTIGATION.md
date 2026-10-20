@@ -66,3 +66,20 @@ Operator-supplied `stage4_selective_report.json`, created `2026-10-20T03:32:47.5
 **Interpretation:** The opt-in selector removes the observed false-exact-total error in four of four held-out comparisons. D3 remains partial under the rubric because it omits the computable subtotal. This is evidence for the narrow unknown-fee family, not proof of general reasoning improvement or successful live follow-up continuity. Selective history is still opt-in; no promotion to default behavior. The comparison is unseeded and changes both injected dialogue and history-dependent response-policy inputs.
 
 **Next validation gate:** automated, fresh-process multi-turn referential follow-ups and topic shifts, plus offline test suite confirmation. Do not silently enable selective mode in normal operation or delete history. Stage 4 NOT PASSED, Increment 9 ON HOLD, stable `main` unchanged.
+
+## Automated continuity gate — awaiting operator execution
+
+Added `tools/stage4_continuity_diagnostic.py` and offline harness tests. Four synthetic scenarios (F1/F2 follow-up chains; T1/T2 topic shifts followed by referential questions) are run in both default and opt-in selective modes, with alternating condition order. Each sequence starts with empty synthetic in-memory dialogue; subsequent turns use the model's actual prior answer, not a canned response. The 8 sequences comprise **24 generated turns** in one invocation. No stored conversation history is read or written, no `ALFI.record()` is invoked, and each ALFI instance uses temporary memory files.
+
+```bash
+cd ~/ALFI
+git switch feature/alfi-1.6-conversational-intelligence
+git pull --ff-only
+python3 -m py_compile tools/stage4_continuity_diagnostic.py tests/test_stage4_continuity_diagnostic.py
+python3 -m unittest discover -s tests -v
+python3 tools/stage4_continuity_diagnostic.py --output stage4_continuity_report.json
+```
+
+**Human review rubric:** Score whether follow-ups retain the correct preceding subject, whether independent topic shifts omit unrelated content, whether a follow-up after a shift refers to the **new** subject, and whether unknown-fee arithmetic avoids false exact totals. A single report contains the full answers and structural prompt diagnostics for comparison; do not infer correctness from execution success alone. Ollama defaults are unseeded; these synthetic conversations are not a production-equivalent saved-memory test.
+
+**Status:** remote implementation committed, local execution and live results not yet verified. Do not enable selective mode by default. Stage 4 NOT PASSED; Increment 9 ON HOLD; stable `main` unchanged.
