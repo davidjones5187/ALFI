@@ -41,17 +41,19 @@ def history_snapshot(path=HISTORY_FILE):
             and isinstance(item.get("assistant"), str)][-100:]
 
 
-def run_trials(cases, history, model, url):
+def run_trials(cases, history, model, url, selective=False):
     results = []
     with tempfile.TemporaryDirectory(prefix="alfi-stage4-") as folder:
         ai = ALFI(Path(folder) / "ai_memory.json", ollama_model=model, ollama_url=url)
         ai.debug = True
         for index, (case_id, question, subtotal) in enumerate(cases):
-            order = ("normal", "excluded") if index % 2 == 0 else ("excluded", "normal")
+            comparison = "selective" if selective else "excluded"
+            order = ("normal", comparison) if index % 2 == 0 else (comparison, "normal")
             for condition in order:
                 ai.history = list(history)
                 diagnostics = io.StringIO()
-                with patch.dict(os.environ, {"ALFI_DIAGNOSTIC_NO_HISTORY": "1" if condition == "excluded" else "0"}):
+                with patch.dict(os.environ, {"ALFI_DIAGNOSTIC_NO_HISTORY": "1" if condition == "excluded" else "0",
+                                             "ALFI_STAGE4_SELECTIVE_HISTORY": "1" if condition == "selective" else "0"}):
                     with contextlib.redirect_stderr(diagnostics):
                         answer = ai.generate(question)
                 # Diagnostic logs may contain answer text; retain only safe structural fields.
@@ -78,6 +80,8 @@ def main():
     parser.add_argument("--output", default="stage4_diagnostic_report.json")
     parser.add_argument("--model", default=os.environ.get("ALFI_OLLAMA_MODEL", "gemma3:4b"))
     parser.add_argument("--url", default="http://127.0.0.1:11434/api/chat")
+    parser.add_argument("--selective", action="store_true",
+                        help="Compare default history against opt-in selective history")
     args = parser.parse_args()
     output = Path(args.output).resolve()
     if output == Path(HISTORY_FILE).resolve():
@@ -89,7 +93,8 @@ def main():
               "model": args.model, "history_snapshot_pairs": len(snapshot),
               "scoring": "Human review required; no automatic correctness claims",
               "generation_options": "Ollama defaults (not seeded)",
-              "runs": run_trials(CASES, snapshot, args.model, args.url)}
+              "comparison": "normal_vs_selective" if args.selective else "normal_vs_excluded",
+              "runs": run_trials(CASES, snapshot, args.model, args.url, selective=args.selective)}
     output.write_text(json.dumps(report, indent=2), encoding="utf-8")
     print(f"Completed {len(report['runs'])} runs. Report: {output}")
     print("History not written. Review report before sharing; it contains model answers.")
