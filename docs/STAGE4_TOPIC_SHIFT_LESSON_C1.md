@@ -100,3 +100,17 @@ Operator launched `ALFI_DEBUG=1 ALFI_OLLAMA_MODEL=gemma3:4b ALFI_STAGE4_SELECTIV
 - **Next action:** Investigate why `Explain that last answer.` is not included in the selector's referential patterns. A focused, authorized selector fix with regression coverage is an engineering candidate; do not modify the default runtime without separate scope approval. Operator should give corrective feedback and then execute unseen R1/R2; preserve the already published holdout prompts. Do not infer retention or transfer.
 
 Stage 4 remains under assessment; Increment 9 on hold; stable main unchanged.
+
+
+## C1 correction and uncoached retest — operator continuation 2026-10-20
+
+Operator continued the **same** A.L.F.I. process, delivered both planned corrections, asked R1/R2 in order, then exited with `/quit`. Debug records show `gemma3:4b`, `ALFI_STAGE4_SELECTIVE_HISTORY=1`, no saved-memory matches, no format violations or corrective retries, and initial generations throughout.
+
+- **Correction A (unscored):** After feedback on the bookstore follow-up, A.L.F.I. claimed it had assumed a gift-wrapping fee. This misdiagnosed the original error: the original bookstore answer correctly preserved the unspecified fee, but `Explain that last answer` was deprived of history and answered about model architecture.
+- **Correction B (unscored):** A.L.F.I. acknowledged hypochlorous acid/hypochlorite as principal pool disinfectants, but additionally described chlorine dioxide as a potential byproduct; do not treat the entire scientific correction as verified mastery.
+- **R1:** `What is erosion?` → three train lockers at $8 each plus unknown reservation charge → `Explain your answer.` Initial independent fee answer correctly gave $24 known subtotal and unknown exact total. The follow-up was classified `selective_independent`, **zero history pairs**, `prompt_user_question: original`; A.L.F.I. requested clarification and referred to model weights rather than explaining lockers. **Continuity score 0/2**. This repeats the P1 history-selector gap for another ordinary explanation phrase.
+- **R2:** `Describe how bees pollinate flowers.` → bicycle lights after sunset → `Why does that matter?` The follow-up was `selective_referential`, **five history pairs**, `prompt_user_question: resolved`; A.L.F.I. correctly stayed with bicycle visibility and collision prevention. **Continuity score 2/2**.
+- **Retest total: 2/4 (50%)** on two final follow-up responses. R1/R2 independent middle-turn answers were correct but are not continuity grades. These retests are post-teaching, not a fresh-process retention trial. No evidence yet of delayed retention or novel transfer; both remain **N/A**.
+- **Engineering diagnosis:** Strong repeated evidence that the opt-in selector excludes genuinely referential phrases such as `Explain that last answer.` and `Explain your answer.`, while recognizing `Why is that important?` and `Why does that matter?`. This is an identifiable prompt-assembly limitation; cannot infer that A.L.F.I. failed to learn solely from R1. Evaluate a narrowly scoped selector change with unit and live regression tests **only upon operator authorization**. Keep default runtime unchanged and do not touch stable `main`.
+
+**Decision:** C1 completed through Retest; not passed for promotion. Next: operator decision on selector fix versus a diagnostic normal-history control, then delayed retention and genuinely novel transfer prompts. Increment 9 on hold.
