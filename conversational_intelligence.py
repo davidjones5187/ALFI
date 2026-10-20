@@ -361,3 +361,24 @@ def factual_revision_guidance(message, answer):
         if re.search(r"quantum computers? can (?:solve|speed up).*?(?:unconstrained|linear|quadratic|semidefinite)", answer, re.I | re.S):
             return "Remove unsupported category-wide quantum speedup claims."
     return ""
+
+
+# Stage 4 experimental context selector. Opt-in only; not a production default.
+# Only explicit referential forms use dialogue history. Independent questions do
+# not inherit arbitrary recent answers. Unknown referents remain unresolved.
+def select_stage4_history(message, history, max_turns=5):
+    """Return (selected_turns, mode) without mutating the source history."""
+    question = message.strip()
+    if not question or COMMAND.match(question):
+        return [], "independent"
+    referential = (FOLLOWUP.fullmatch(question) or IMPORTANCE.fullmatch(question)
+                   or CORRECTION.match(question)
+                   or re.fullmatch(r"(?:what did (?:i|you) (?:just )?say|"
+                                   r"what was (?:my|your) (?:last|previous) (?:question|answer))"
+                                   r"[?.! ]*", question, re.I))
+    if not referential:
+        return [], "independent"
+    selected = [dict(turn) for turn in history[-max_turns:]
+                if isinstance(turn, dict) and isinstance(turn.get("user"), str)
+                and isinstance(turn.get("assistant"), str)]
+    return selected, "referential" if selected else "referential_missing"
