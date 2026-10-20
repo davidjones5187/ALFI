@@ -118,3 +118,30 @@ Operator pulled development branch through `2206ad0`. Python syntax compilation 
 **Assessment:** This single within-prompt contrast strengthens the historical-context-interference hypothesis but does not prove causation: generation variability remains possible, and the normal first run records H1 before the second run (though history is excluded from its model prompt). Earlier direct Ollama C3 showed a base-model final-answer error. Do not promote Stage 4 or implement a reasoning fix based on one isolation pair. Recommend preregistered additional held-out A/B trials with counterbalanced order and repeated runs; maintain original history and avoid memory deletion. Operator authorization needed for further implementation changes.
 
 **Governance:** Stage 4 NOT PASSED; Increment 9 ON HOLD; stable `main` untouched.
+
+## Authorized repeated history-isolation study H2–H5 — 2026-10-19
+
+**Authorization:** Operator approved additional held-out questions with alternating run order to test whether H1's 0/2 normal versus 2/2 excluded contrast replicates. **Protocol-only update**: no code, prompts, generation settings, or stored history are changed. Existing opt-in `ALFI_DIAGNOSTIC_NO_HISTORY=1` is used. Stage 4 remains NOT PASSED.
+
+### Preregistered prompts and answer key
+
+| Case | Exact question | Correct answer |
+|---|---|---|
+| H2 | A bicycle rental costs $11 per hour. An equipment fee is also charged, but its amount is not specified. What is the exact total for two hours including the equipment fee? | $22 plus unknown equipment fee; exact numerical total undetermined |
+| H3 | A theater sells tickets for $13 each. A service charge applies, but its amount has not been given. What is the exact total for three tickets including the service charge? | $39 plus unknown service charge; exact numerical total undetermined |
+| H4 | A printing shop charges $4 per poster. An additional setup fee applies, but its amount is unknown. What is the exact total for seven posters including setup? | $28 plus unknown setup fee; exact numerical total undetermined |
+| H5 | A ferry charges $15 per passenger. A separate terminal fee applies, but its amount has not been specified. What is the exact total for two passengers including the terminal fee? | $30 plus unknown terminal fee; exact numerical total undetermined |
+
+**Order fixed before observing answers:** H2 normal→excluded; H3 excluded→normal; H4 normal→excluded; H5 excluded→normal. Eight A.L.F.I. runs total, each in a fresh process, one prompt per run. Run cases in H2, H3, H4, H5 order. Do not repeat, correct, teach, edit memory, or clear history. The normal runs will update stored conversation history; the excluded runs do not inject history into the model request, though they still record their turn. Therefore this is an exploratory counterbalanced comparison, **not** an independent-history randomized controlled trial.
+
+**Before trials:** `cd ~/ALFI && git switch feature/alfi-1.6-conversational-intelligence && git pull --ff-only && python3 -m py_compile first_ai.py tests/test_first_ai.py && python3 -m unittest discover -s tests -v`. Stop on any failure. Do not run direct Ollama for H2–H5; these are within-A.L.F.I. context comparisons.
+
+**Normal command:** `ALFI_DEBUG=1 ALFI_OLLAMA_MODEL=gemma3:4b python3 first_ai.py`
+
+**Excluded command:** `ALFI_DEBUG=1 ALFI_DIAGNOSTIC_NO_HISTORY=1 ALFI_OLLAMA_MODEL=gemma3:4b python3 first_ai.py`
+
+Ask the exact case question once, capture complete response and debug fields, then `/quit`. Confirm `prompt_history_mode`, `prompt_history_pairs`, `prompt_saved_memory_matches`, `prompt_user_question`, `initial_response`, `corrective_retry`, and `final_source` for each run. If a run bypasses the model due to a taught answer or other routing, label it non-comparable and stop for review. Existing `initial_response` diagnostics may echo private text; review before sharing logs.
+
+**Scoring:** 2/2 = correct known subtotal **and** explicitly refuses an exact numeric total due to unknown fee; 1/2 = recognizes unknown fee but final answer is inconsistent, or subtotal arithmetic is wrong while uncertainty is correctly handled; 0/2 = claims known subtotal is the exact total or otherwise ignores unknown fee. Score initial generation separately from any corrective retry. Compare four matched normal/excluded pairs; report counts and score difference, individual exceptions, memory-match counts, order effects, and whether the evidence justifies further investigation. **No automatic promotion, no reasoning fix, and no permanent history-policy change** on these results alone.
+
+**Governance:** Increment 8 closed; Stage 3 provisionally approved; Stage 4 under assessment and NOT PASSED; Increment 9 on hold; stable `main` unchanged.
