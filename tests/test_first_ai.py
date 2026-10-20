@@ -67,8 +67,8 @@ class TestALFI(unittest.TestCase):
             ai.debug = True
             ai.history = [{"user": "private user text", "assistant": "private answer"}]
             fake = io.BytesIO(json.dumps({"message": {"content": "Response."}}).encode())
-            with patch("first_ai.urllib.request.urlopen", return_value=fake), \\
-                 patch("first_ai.sys.stderr", new_callable=io.StringIO) as stderr:
+            with (patch("first_ai.urllib.request.urlopen", return_value=fake),
+                  patch("first_ai.sys.stderr", new_callable=io.StringIO) as stderr):
                 ai.generate("What is the total?")
             log = stderr.getvalue()
             self.assertIn("prompt_roles: system,user,assistant,system,user", log)
