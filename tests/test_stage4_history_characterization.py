@@ -73,6 +73,47 @@ class Stage4HistoryCharacterizationTests(unittest.TestCase):
         self.assertEqual(len([m for m in messages if m["role"] == "assistant"]), 1)
         self.assertEqual(preserved, history)
 
+    def test_stage4_transfer_followups_are_referential(self):
+        history = [
+            {"user": "A clinic charges $18 for each of two forms plus an unknown fee.",
+             "assistant": "The known subtotal is $36; the exact total is unknown."},
+            {"user": "Describe how a bicycle brake works.",
+             "assistant": "Brakes slow the bicycle."},
+            {"user": "Describe how a bicycle light works.",
+             "assistant": "Lights make cyclists visible."},
+        ]
+        for question in ("Why can't you give an exact figure?",
+                         "Which one is more important?"):
+            with self.subTest(question=question):
+                selected, mode = select_stage4_history(question, history)
+                self.assertEqual(mode, "referential")
+                self.assertEqual(selected, history)
+
+    def test_stage4_transfer_followups_without_history(self):
+        for question in ("Why can't you give an exact figure?",
+                         "Which one is more important?"):
+            with self.subTest(question=question):
+                self.assertEqual(select_stage4_history(question, []),
+                                 ([], "referential_missing"))
+
+    def test_stage4_independent_questions_remain_isolated(self):
+        history = [{"user": "Discuss bicycle brakes.", "assistant": "Brakes slow bicycles."}]
+        for question in ("Which bicycle brake is more important for mountain riding?",
+                         "Why can't you give an exact figure for pi?",
+                         "What is the exact total for three $8 lockers and an unknown fee?",
+                         "Explain how bicycle lights work."):
+            with self.subTest(question=question):
+                self.assertEqual(select_stage4_history(question, history),
+                                 ([], "independent"))
+
+    def test_stage4_new_followups_in_prompt_not_saved_history(self):
+        history = [{"user": "Compare a bicycle brake and a bicycle light.",
+                    "assistant": "Both are safety equipment."}]
+        with patch.dict("os.environ", {"ALFI_STAGE4_SELECTIVE_HISTORY": "1"}):
+            messages, preserved = self._capture("Which one is more important?", history, False)
+        self.assertEqual(len([m for m in messages if m["role"] == "assistant"]), 1)
+        self.assertEqual(preserved, history)
+
     def test_selector_missing_referent_does_not_invent_history(self):
         selected, mode = select_stage4_history("Tell me more about that.", [])
         self.assertEqual((selected, mode), ([], "referential_missing"))
