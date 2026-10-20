@@ -71,3 +71,25 @@ Operator started a new process with `ALFI_DEBUG=1 ALFI_OLLAMA_MODEL=gemma3:4b py
 | R2.5 | Hammer and screwdriver are tools; strawberry is fruit | 2/2 | Correct categorization |
 
 **R2 total: 10/10 (100%)** across five unique planned probes; six initial-generation responses and zero corrective retries. **R1 + R2: 20/20 (100%)** across ten planned probes. Session R3 is pending; Stage 3 remains under assessment, not promoted. Increment 8 remains closed; Increment 9 on hold. No code changes are warranted from these results.
+
+## Session R3 — observed results (2026-10-19)
+
+Operator launched `ALFI_DEBUG=1 ALFI_OLLAMA_MODEL=gemma3:4b python3 first_ai.py` in a fresh process and asked all five R3 prompts in the prescribed order without feedback; ended with `/quit`. All five diagnostic traces show `format_violation: none`, `corrective_retry: not_needed`, `final_source: initial_generation`.
+
+| Trial | Observed response | Score | Finding |
+|---|---|---:|---|
+| R3.1 | Eleven minus six equals five crayons | 2/2 | Correct subtraction |
+| R3.2 | Two kilograms sand and cotton have equal mass | 2/2 | Correct equal-mass comparison |
+| R3.3 | Curtains block incoming visible light, reducing illuminance | 2/2 | Correct cause/effect; more technical than needed |
+| R3.4 | Six plus three equals nine blocks | 2/2 | Correct addition |
+| R3.5 | Oak tree and rosebush are living plants; plastic spoon is not | 2/2 | Correct categorization |
+
+**R3: 10/10 (100%), 5/5 initial-generation correct, 0 retries.**
+
+## Three-session readiness review — decision
+
+- **R1 10/10; R2 10/10; R3 10/10; combined 30/30 (100%)** on 15 planned distinct probes. The repeated R2.1 answer is documented but not separately scored.
+- Each of five competencies (subtraction/possession, equal mass, everyday cause/effect, addition, categorization) has three novel examples across three process-restart sessions; no repeated critical failures in this benchmark.
+- Meets the curriculum's *provisional Stage 3 readiness* numerical gate (>=80%, >=3 sessions, >=2 variants/skill). Earlier historical failures remain in the record, and all sessions retained existing persistent history/memory; do not infer isolated model improvement, weight updates, or general intelligence.
+- **Decision: Stage 3 provisionally ready on this benchmark, subject to human transcript review for formal promotion.** This record constitutes the transcript-based review and recommendation, not authorization to modify curriculum status or open Increment 9. Stage 4 retention/transfer is a separate assessment.
+- Increment 8 closed; Increment 9 on hold; stable `main` unchanged. No application code or model configuration changes made.
