@@ -56,3 +56,18 @@ Operator confirmed development branch and fast-forward pull through commit `85e3
 | R1.5 | Rabbit and turtle are animals; bicycle is mechanical | 2/2 | Correct categorization |
 
 **R1 total: 10/10 (100%); first-attempt 5/5; retries 0.** This is one restart-separated session relative to prior work, not an isolated clean-memory/model evaluation. Prior Stage 3 records showed errors on giving-away subtraction and equal-mass comparison; the different question sets and operating conditions prevent causal claims about learning. Sessions R2 and R3 remain pending. Do not advance Stage 3 or change code based on R1 alone. Increment 8 remains closed; Increment 9 on hold; `main` unchanged.
+
+## Session R2 — observed results (2026-10-19)
+
+Operator started a new process with `ALFI_DEBUG=1 ALFI_OLLAMA_MODEL=gemma3:4b python3 first_ai.py`, asked R2.1 twice, then R2.2–R2.5, and exited with `/quit`. This was a restart-separated session; history and persistent memory were not cleared. Each of six generated answers was reported as `initial_generation`, `format_violation: none`, and `corrective_retry: not_needed`.
+
+| Trial | Verbatim answer evidence | Score | Assessment |
+|---|---|---:|---|
+| R2.1 | `8 - 3 = 5`; five coins remain in hand | 2/2 | Correct removal and possession |
+| R2.1 repeat | Five coins remain | Not separately scored | Immediate repeatability; not an independent novel variant |
+| R2.2 | Six kilograms paper and glass weigh the same; density does not alter equal total mass | 2/2 | Correct equal-mass comparison |
+| R2.3 | Shirt dries through evaporation, aided by warmth and breeze | 2/2 | Correct mechanism; overelaborate and imprecise humidity-equilibrium phrasing |
+| R2.4 | Four plus five equals nine birds | 2/2 | Correct addition |
+| R2.5 | Hammer and screwdriver are tools; strawberry is fruit | 2/2 | Correct categorization |
+
+**R2 total: 10/10 (100%)** across five unique planned probes; six initial-generation responses and zero corrective retries. **R1 + R2: 20/20 (100%)** across ten planned probes. Session R3 is pending; Stage 3 remains under assessment, not promoted. Increment 8 remains closed; Increment 9 on hold. No code changes are warranted from these results.
