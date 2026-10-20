@@ -79,6 +79,24 @@ class TestALFI(unittest.TestCase):
             self.assertNotIn("private answer", log)
             self.assertNotIn("What is the total?", log)
 
+    def test_diagnostic_history_exclusion_is_ephemeral(self):
+        with tempfile.TemporaryDirectory() as folder:
+            ai = ALFI(Path(folder) / "memory.json")
+            ai.debug = True
+            ai.history = [{"user": "private question", "assistant": "private response"}]
+            payloads = []
+            def fake_request(request, timeout=90):
+                payloads.append(json.loads(request.data))
+                return io.BytesIO(json.dumps({"message": {"content": "A response."}}).encode())
+            with patch.dict("first_ai.os.environ", {"ALFI_DIAGNOSTIC_NO_HISTORY": "1"}), \
+                 patch("first_ai.urllib.request.urlopen", side_effect=fake_request), \
+                 patch("first_ai.sys.stderr", new_callable=io.StringIO) as stderr:
+                ai.generate("An unrelated question?")
+            self.assertEqual([item["role"] for item in payloads[0]["messages"]], ["system", "system", "user"])
+            self.assertEqual(ai.history, [{"user": "private question", "assistant": "private response"}])
+            self.assertIn("prompt_history_mode: excluded", stderr.getvalue())
+            self.assertIn("prompt_history_pairs: 0", stderr.getvalue())
+
     def test_taught_knowledge_skips_model(self):
         with tempfile.TemporaryDirectory() as folder:
             ai = ALFI(Path(folder) / "memory.json")
