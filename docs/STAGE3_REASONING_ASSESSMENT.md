@@ -93,3 +93,7 @@ Operator launched `ALFI_DEBUG=1 ALFI_OLLAMA_MODEL=gemma3:4b python3 first_ai.py`
 - Meets the curriculum's *provisional Stage 3 readiness* numerical gate (>=80%, >=3 sessions, >=2 variants/skill). Earlier historical failures remain in the record, and all sessions retained existing persistent history/memory; do not infer isolated model improvement, weight updates, or general intelligence.
 - **Decision: Stage 3 provisionally ready on this benchmark, subject to human transcript review for formal promotion.** This record constitutes the transcript-based review and recommendation, not authorization to modify curriculum status or open Increment 9. Stage 4 retention/transfer is a separate assessment.
 - Increment 8 closed; Increment 9 on hold; stable `main` unchanged. No application code or model configuration changes made.
+
+## Operator approval — 2026-10-19
+
+The operator explicitly **approved the recommendation** to recognize Stage 3 as **provisionally demonstrated** and begin **separate Stage 4 assessment planning**. This approval does not establish permanent mastery, authorize a release, merge to stable `main`, open Increment 9, or claim that Stage 4 has passed. Historical failures and persistent-memory caveats remain in force. Stage 3 status: **provisionally demonstrated — approved**.
