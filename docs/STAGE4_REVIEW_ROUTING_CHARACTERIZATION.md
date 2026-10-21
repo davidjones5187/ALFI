@@ -23,3 +23,10 @@ Expected: $40 subtotal, exact total unknown; `selective_independent`, 0 history 
 
 ## Decision
 Report whether the selector omitted history on A2 and whether supplying the prior answer resolves the task. Do not modify selector on this evidence alone. Keep distinct from verdict consistency results.
+
+
+## Live results — 2026-10-20
+
+A1 and A2 were accidentally pasted as ONE user input (including literal `A2:` text). The combined input received `selective_independent`, zero history pairs, zero saved-memory matches; ALFI correctly computed $27 but stated a correction was needed, although no earlier response was available to verify. This does NOT constitute a valid two-turn retrospective routing test. B1 self-contained quote was accepted as correct ($27 + unknown fee); C1 independent control computed $40 + unknown fee, with zero history pairs. Both initial generations, no retries.
+
+**Status:** A1/A2 rerun required as two distinct user turns. No new routing conclusion beyond previous confirmed omissions. Do not treat protocol deviation as model failure.
