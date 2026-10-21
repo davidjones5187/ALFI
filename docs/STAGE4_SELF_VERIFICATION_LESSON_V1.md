@@ -35,3 +35,22 @@ Expected: 45 minutes baseline plus unknown delay; exact duration unavailable; ze
 
 ## Scoring
 Each retest answer: 2 fully correct (independent check, explicit original-claim verdict, uncertainty handled), 1 materially correct but incomplete, 0 accepts false arithmetic/exactness or invents unknown zero. Report practice separately from retest; no retroactive R2 regrade. Record model, branch commit, prompt-history mode/pairs, saved-memory matches, first response, corrective retries. R1–R4 are immediate retest, NOT delayed retention or novel transfer. Stage 4 UNDER ASSESSMENT, Increment 9 ON HOLD, stable main untouched.
+
+
+## Live instructional results — 2026-10-20
+
+Operator submitted duplicate copies of the same terminal transcript, treated as ONE run, not two independent replications. Pulled feature branch to `79dfe50`, launched `gemma3:4b` with `ALFI_DEBUG=1`, `ALFI_STAGE4_SELECTIVE_HISTORY=1`; exited `/quit`. No memory/history clearing observed.
+
+- **Teach acknowledgment UNSCORED:** Initial response restated independent verification generically; `corrective_retry: triggered`, retry correctly rejected exact $30 including unspecified fee. Do not count retry as initial success.
+- **Practice P1 2/2:** Correctly accepts 3 × $4 = $12 subtotal plus unknown delivery fee, no exact total; initial generation.
+- **Practice P2 2/2:** Correctly computes 4 × $7 = $28, identifies original $21 contradiction; initial generation. **Coached practice 4/4.**
+- **Correction phase UNSCORED — failed retrospective self-report:** ALFI claimed it had miscalculated Practice 2, although its actual initial P2 answer correctly calculated $28 and flagged $21. It correctly said P1 required no correction. Correction prompt `selective_independent`, zero history pairs, no saved-memory match: original answers were absent from immediate prompt, so this is a false self-attribution and a history-access limitation, not proof it deliberately fabricated a memory.
+- **R1 2/2:** Accepts correct 5 × $6 = $30 subtotal and unknown delivery fee. `selective_independent`, 0 history pairs, **1 saved-memory match** of unknown content.
+- **R2 2/2:** Rejects $40 for 6 × $8; supplies $48 and preserves unspecified service fee. 0 history pairs, 0 saved-memory matches.
+- **R3 1/2:** For 3 × $13 repairs plus unknown mandatory processing fee, acknowledges exact total unknown but incorrectly calls false exact-$39 claim "logically consistent but incomplete", and refers to $39 as "total cost" rather than unequivocally known subtotal. 0 history pairs, 0 memory matches.
+- **R4 2/2:** Rejects exact 45-minute journey and unsupported zero traffic delay, identifies unknown duration. 0 history pairs, 0 memory matches.
+- **Immediate uncoached retest 7/8 (87.5%).** R1–R4 all initial generations, no retries. All prompts `selective_independent`, 0 history pairs. This is not delayed retention or demonstrated model-weight learning.
+
+**Assessment:** Improved initial-generation verification on independent, self-contained tasks, but premise validation remains inconsistent and retrospective review is unreliable without the prior answer actually supplied. Preserve prior R2 3/6 and all earlier scores. Recommend separate engineering characterization of correction-history routing and a held-out delayed self-verification retest; no automatic broad code changes.
+
+**Governance:** Stage 4 UNDER ASSESSMENT, Increment 9 ON HOLD, stable main unchanged.
