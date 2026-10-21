@@ -39,3 +39,8 @@ python3 -m unittest discover -s tests -v
 ```
 
 Stable v1.5.1 main untouched, Stage 4 under assessment, Increment 9 on hold.
+
+
+## Operator Mac verification — 2026-10-21
+
+Operator fast-forward pulled feature branch from `0601417` to `8c6273e`. Executed `python3 diagnostics/stage4_e1_replay_v2.py`: **32/32 exact matches**, TP 15, FP 0, FN 0, TN 17, four-class abstention rate 12.5%, no mismatches. Executed `python3 diagnostics/stage4_adversarial_e3.py`: **30/40 matches**, mismatch IDs 3, 8, 9, 10, 16, 20, 23, 34, 39, 40; TP 14, FP 4, FN 5. Executed `python3 -m unittest discover -s tests -v`: **158/158 passed in 0.243 seconds**, OK, no failures/errors. These reproduce prior reported results; they are not a new held-out trial. The existing unittest suite tests v1, not comprehensive v2/E3 acceptance. No runtime integration or model-weight learning demonstrated. E3 label 34 remains provisional for human adjudication. Engineering disposition unchanged: v2 not approved for live integration; Stage 4 under assessment; Increment 9 on hold; main untouched.
