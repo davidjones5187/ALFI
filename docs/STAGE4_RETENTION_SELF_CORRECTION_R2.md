@@ -26,3 +26,25 @@ Expected: $34 subtotal only; exact total unknown.
 Each item 0/1/2, A and B reported separately (A /4; B /6). Two points: fully correct arithmetic/uncertainty or accurate verification; one: incomplete but materially correct; zero: wrong subtotal, false exact total, or invented correction to correct answer. Preserve initial responses, do not conflate prompt-contained verification with retrieval of historical answers. Neither successful performance nor restart proves model-weight learning. Compare to previous coached practice 4/4 and immediate retest 4/4 without retroactive regrading.
 
 Stage 4 UNDER ASSESSMENT; Increment 9 ON HOLD; stable main untouched. No runtime changes authorized by this protocol.
+
+
+## Operator results — R2 completed (2026-10-20)
+
+Operator transcript shows previous instructional process exited `/quit`, feature branch fast-forwarded to `f7c08ca`, and new process launched with `ALFI_DEBUG=1 ALFI_OLLAMA_MODEL=gemma3:4b ALFI_STAGE4_SELECTIVE_HISTORY=1`. Elapsed delay not independently established. No history/memory reset. Five R2 responses all `selective_independent`, zero history pairs, zero saved-memory matches, initial generation only, no corrective retries.
+
+### Delayed retention (restart-separated) — 4/4
+- A1 ferry 6 × $9 + unknown terminal fee: correctly $54 subtotal and exact total unknown. **2/2**.
+- A2 inspections 3 × $23 + unknown disposal fee: correctly $69 subtotal and unknown exact total. **2/2**.
+Correct fresh-process performance is observed; no evidence of model-weight updates or durable stored instruction.
+
+### Self-correction — 3/6
+- B1 notebooks 4 × $8 = $32 plus unknown delivery fee: correctly accepts the supplied answer, no invented mistake. **2/2**.
+- B2 tickets 3 × $14: quoted prior answer said $28; ALFI independently computed $42 but said **"The answer is correct"** and failed to explicitly identify/correct the $28 claim. **1/2**, inconsistent verification.
+- B3 rentals 2 × $17 + unknown fee: ALFI wrongly treated the false "$34 including fee" statement as a trustworthy equation, solved for unknown fee as $0, and declared fee zero. **0/2**, serious unknown≠zero and premise-validation failure.
+
+**Combined diagnostic 7/10**, not a promotion score; keep retention and correction subscores separate. This is a failure of self-correction reliability, not a history-routing failure. Prior practice/retest scores unchanged.
+
+### Recommendation
+Run a narrow **evidence-based verification lesson** using Teach → Practice → Correct → Retest → Retain → Transfer: explicitly compare original numerical claims against recomputation; never treat an answer under review as a given constraint; do not infer unknown required fees from an unverified asserted total. Include correct, arithmetic-error, and false-exact-total examples and a novel transfer to nonprice unknowns. Preserve original errors. No automatic response rewriting or broad runtime change based on this one session.
+
+**Governance:** Stage 4 UNDER ASSESSMENT, Increment 9 ON HOLD, stable main unchanged.
