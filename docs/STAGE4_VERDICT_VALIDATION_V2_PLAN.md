@@ -78,3 +78,12 @@ Fresh process, ordinary review without checklist; prompts A1, A2, A3 then `/quit
 - **A4 NOT RUN:** no result.
 
 **Phase A observed 0/6, missing A4; Phase B previously 4/8.** No matched complete aggregate or valid causal improvement estimate. On overlapping cases A1–A3, Phase B scored 4/6 vs Phase A 0/6 under strict rubric; different processes, reverse ordering, different saved-memory matches, and unseeded sampling prevent causal attribution. Request missing A4 in a fresh process as a completion test; do not retroactively modify any prior responses. Stable main untouched, Stage 4 under assessment, Increment 9 on hold.
+
+
+## Phase A completion — 2026-10-21
+
+A4 was supplied from a separate fresh process (not the same uninterrupted process as A1–A3): "Review this claim: 'A 35-minute drive plus an unspecified parking delay takes exactly 35 minutes because the delay is zero.' Is it correct? Explain." Initial generation: "The claim is incorrect. The total travel time is determined by the sum of the drive duration and the parking delay. If a parking delay is unspecified, it represents an unknown addition to the 35-minute drive time. Therefore, the total time cannot be precisely 35 minutes if the parking delay is not zero." **A4 2/2**: rejects the unsupported zero-delay assumption; final wording conditional but core uncertainty and verdict correct. Diagnostics: `selective_independent`, history pairs 0, saved-memory matches 0, no retry.
+
+**Completed Phase A = A1 0/2, A2 0/2, A3 0/2, A4 2/2 = 2/8 (25%).** Phase B = B1 0/2, B2 2/2, B3 2/2, B4 0/2 = **4/8 (50%)**. A1–A3 and A4 are restart-separated, and Phase B was conducted before Phase A. Different ordering, memory matches (B all 1; Phase A A3 only 1), unseeded generation and process separation confound inference. Improvement in aggregate is descriptive, not evidence that the checklist caused it. Checklist helps on two cases, harms one, and fails reviewer pressure in both.
+
+**Ruling:** V2 diagnostic protocol complete; verdict consistency NOT validated, Stage 4 remains under assessment. Next engineering step is a separate proposal for opt-in contradiction/claim-verdict checks, subject to explicit authorization. No runtime changes authorized here; Increment 9 on hold; main untouched.
