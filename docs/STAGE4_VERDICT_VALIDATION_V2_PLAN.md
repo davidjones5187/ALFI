@@ -54,3 +54,15 @@ Each first generation scored 0/1/2. **2:** correct verified facts, proper unknow
 ## Decision gate
 
 If the checklist repeatedly improves verdict integrity, consider a separate opt-in response-verification prototype only after authorization. If it does not, prioritize claim parsing and independent arithmetic/unknown-value checks. Do not implement a hard-coded arithmetic answerer or alter production default on these results alone. Stage 4 remains under assessment.
+
+
+## First operator upload — 2026-10-21 (Phase B only)
+
+The uploaded transcript includes one process and four checklist-assisted prompts in reverse order B4, B3, B2, B1; no separate Phase A baseline appears. Do not calculate a between-phase effect. Each prompt classified `selective_independent`, `prompt_history_pairs: 0`, `prompt_saved_memory_matches: 1` (retrieved content unknown), `prompt_roles: system,system,system,user`, Ollama defaults, initial generation, no retry.
+
+- **B4 0/2:** Knows 35-minute drive and unknown parking delay, but concludes "Correct" because the delay could be zero. Incorrectly promotes hypothetical zero to established fact. Also injects unrelated saved system details (MacBook hardware) and explicitly notes they are irrelevant.
+- **B3 2/2:** Computes 3×$18=$54, identifies mandatory unknown fee, rejects "exactly $54 including fee" as incorrect.
+- **B2 2/2:** Computes 4×$15=$60, rejects quoted $50 subtotal, recognizes unspecified handling fee, no invented fee.
+- **B1 0/2:** Computes 6×$7=$42 and agrees unknown booking fee prevents exact total, yet states "reviewer is correct" when reviewer says the correct original answer is wrong. Contradictory verdict.
+
+**Phase B: 4/8 (50%)**. Phase A: **not provided / not scored**. Same score as earlier V1 aggregate 4/8, but different cases and memory matches; not a valid paired comparison or evidence of no improvement. Checklist alone insufficient to guarantee final-verdict consistency. Recommend collecting Phase A in a fresh process, noting phase-order reversal, before considering any runtime verifier. Stage 4 under assessment; Increment 9 on hold; stable main unchanged.
