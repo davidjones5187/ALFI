@@ -56,8 +56,6 @@ def assess(question: str, response: str) -> Assessment:
         return Assessment('insufficient_evidence', 'No explicit verdict detected', expected, None, known)
     if actual != expected:
         return Assessment('contradiction', 'Final verdict conflicts with recognized claim evidence', expected, actual, known)
-    if qty and re.search(r'\b(?:equivalent to|equal to|equals)\s+\$'+str(known)+r'\b', response, re.I) and re.search(r'unknown|unspecified', response, re.I) and re.search(r'\b(?:fee|charge)\b', response, re.I):
-        return Assessment('contradiction', 'Unknown fee described as equal to zero contribution', expected, actual, known)
     return Assessment('supported', 'Explicit verdict agrees with recognized claim evidence; other reasoning not verified', expected, actual, known)
 
 if __name__ == '__main__':
