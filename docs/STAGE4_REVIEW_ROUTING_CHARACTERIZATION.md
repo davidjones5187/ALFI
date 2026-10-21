@@ -46,3 +46,12 @@ Rerun is now valid. Recommend a narrowly scoped routing implementation with offl
 ## Authorized narrow implementation — 2026-10-20
 
 User explicitly approved the narrow retrospective routing fix. On feature branch only, `select_stage4_history` now recognizes `Review your previous answer...`, `Review your last answer.`, and optional `Please` prefix as referential, retaining the existing bounded last-five-turn behavior. This does NOT semantically filter individual history turns, modify memory, change the default mode, or add verdict validation. Added four offline regression tests: positive variants, no-history fallback, prior assistant answer present in intercepted prompt, and independent negative controls. The actual model and offline test suite have NOT yet been executed by this assistant; operator verification is pending. Initial implementation escape typo was immediately corrected before tests were added; current code uses single raw regex escapes. Stable main untouched. Stage 4 under assessment; Increment 9 on hold.
+
+
+## Post-fix operator verification — 2026-10-20
+
+Operator pulled feature branch at `1dc0c57`. Offline `python3 -m unittest discover -s tests -v`: **151/151 passed**. Live opt-in `ALFI_STAGE4_SELECTIVE_HISTORY=1`, `gemma3:4b`, debug:
+- Original station question: $27 known subtotal, exact total unknown, `selective_independent`, zero history pairs/memory matches, initial generation, no retry.
+- "Review your previous answer. Quote the subtotal you gave and say whether any correction is necessary.": `selective_referential`, five history pairs, zero saved-memory matches, original user question, 13 messages; correctly quoted $27 and said no correction necessary. Initial generation, no retry.
+
+**Targeted routing regression PASSED** for this wording and sequence. History still includes up to five pairs rather than selecting a single relevant pair. Do not infer Stage 4 retention/transfer pass, reliable self-verification, or model-weight learning. No changes to stable main. Increment 9 on hold.
