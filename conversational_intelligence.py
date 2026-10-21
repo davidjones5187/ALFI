@@ -382,7 +382,12 @@ def select_stage4_history(message, history, max_turns=5):
         r"which one is more important)[?.! ]*",
         question, re.I,
     )
-    referential = (FOLLOWUP.fullmatch(question) or prior_answer_request or contextual_request or IMPORTANCE.fullmatch(question)
+    # Explicit retrospective requests need the actual previous assistant answer.
+    retrospective_review = re.fullmatch(
+        r"(?:please\\s+)?review\\s+(?:your\\s+)?(?:previous|last)\\s+answer\\b[^\\n]*",
+        question, re.I,
+    )
+    referential = (FOLLOWUP.fullmatch(question) or prior_answer_request or contextual_request or retrospective_review or IMPORTANCE.fullmatch(question)
                    or CORRECTION.match(question)
                    or re.fullmatch(r"(?:what did (?:i|you) (?:just )?say|"
                                    r"what was (?:my|your) (?:last|previous) (?:question|answer))"
