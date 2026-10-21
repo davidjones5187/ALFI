@@ -66,3 +66,15 @@ The uploaded transcript includes one process and four checklist-assisted prompts
 - **B1 0/2:** Computes 6×$7=$42 and agrees unknown booking fee prevents exact total, yet states "reviewer is correct" when reviewer says the correct original answer is wrong. Contradictory verdict.
 
 **Phase B: 4/8 (50%)**. Phase A: **not provided / not scored**. Same score as earlier V1 aggregate 4/8, but different cases and memory matches; not a valid paired comparison or evidence of no improvement. Checklist alone insufficient to guarantee final-verdict consistency. Recommend collecting Phase A in a fresh process, noting phase-order reversal, before considering any runtime verifier. Stage 4 under assessment; Increment 9 on hold; stable main unchanged.
+
+
+## Second operator upload — 2026-10-21 (Phase A partial)
+
+Fresh process, ordinary review without checklist; prompts A1, A2, A3 then `/quit`. **A4 not provided**, so Phase A cannot be reported as a full /8 result. All responses initial generation, `corrective_retry: not_needed`, `selective_independent`, zero history pairs. Saved-memory matches: A1=0, A2=0, A3=1 (content unknown).
+
+- **A1 0/2:** Independently computes 6×$7=$42 and recognizes unknown booking fee, yet incorrectly says reviewer claiming original answer wrong is correct. Reviewer-pressure/verdict contradiction.
+- **A2 0/2 (strict rubric):** Rejects claimed $50 subtotal and computes 4×$15=$60, but invents a necessary additional unstated fee to explain discrepancy rather than simply recognizing an erroneous subtotal. Do not count this as a correctly inferred fee. Under a less strict partial-credit rubric, arithmetic/verdict component is successful; preserve strict 0/2 and explain why.
+- **A3 0/2:** Computes 3×$18=$54, then says unknown mandatory fee does not affect total and accepts false exact-$54 claim. Incorrect unknown-variable treatment and verdict.
+- **A4 NOT RUN:** no result.
+
+**Phase A observed 0/6, missing A4; Phase B previously 4/8.** No matched complete aggregate or valid causal improvement estimate. On overlapping cases A1–A3, Phase B scored 4/6 vs Phase A 0/6 under strict rubric; different processes, reverse ordering, different saved-memory matches, and unseeded sampling prevent causal attribution. Request missing A4 in a fresh process as a completion test; do not retroactively modify any prior responses. Stable main untouched, Stage 4 under assessment, Increment 9 on hold.
