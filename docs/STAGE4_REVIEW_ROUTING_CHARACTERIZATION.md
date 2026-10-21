@@ -30,3 +30,14 @@ Report whether the selector omitted history on A2 and whether supplying the prio
 A1 and A2 were accidentally pasted as ONE user input (including literal `A2:` text). The combined input received `selective_independent`, zero history pairs, zero saved-memory matches; ALFI correctly computed $27 but stated a correction was needed, although no earlier response was available to verify. This does NOT constitute a valid two-turn retrospective routing test. B1 self-contained quote was accepted as correct ($27 + unknown fee); C1 independent control computed $40 + unknown fee, with zero history pairs. Both initial generations, no retries.
 
 **Status:** A1/A2 rerun required as two distinct user turns. No new routing conclusion beyond previous confirmed omissions. Do not treat protocol deviation as model failure.
+
+
+## Correctly separated A1/A2 rerun — 2026-10-20
+
+New transcript includes earlier repeated session logs; count only the new correctly separated A1/A2 following pull to `e5a4f57`.
+
+A1: "A station sells three passes at $9 each plus an unspecified service charge..." initial generation $27 known subtotal, exact total unknown. `selective_independent`, zero history pairs and saved-memory matches; no retry.
+
+A2: "Review your previous answer. Quote the subtotal you gave and say whether any correction is necessary." Classified `selective_independent`, `prompt_history_pairs: 0`, `prompt_saved_memory_matches: 0`, `prompt_user_question: original`, no retry. A.L.F.I. stated it did not retain previous answers and could not quote subtotal. That blanket self-description is not warranted; specific prompt omitted prior answer. **Confirmed narrow selector coverage failure for this retrospective phrase**, not evidence that persisted history is absent.
+
+Rerun is now valid. Recommend a narrowly scoped routing implementation with offline positive/negative controls and opt-in live regression, subject to separate authorization; do not change stable main.
