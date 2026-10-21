@@ -28,3 +28,8 @@ Using the eight preserved V2 initial responses, the prototype's final-verdict ch
 - It does not prove that a post-generation safeguard improves A.L.F.I.'s actual responses.
 
 **Required before runtime integration consideration:** run full repository tests, construct a larger independently labeled held-out corpus with correct and incorrect claims, report false positives, missed contradictions, abstentions, and test cases with quoted verdicts/negations. Any runtime opt-in integration requires separate authorization. Stage 4 under assessment; Increment 9 on hold; stable v1.5.1 main untouched.
+
+
+## Operator full-suite verification — 2026-10-21
+
+Operator pulled feature branch from `6a754fe` to `0601417` (fast-forward) and executed `python3 -m unittest discover -s tests -v` on local Mac. **158 tests passed in 0.236 seconds; OK.** This includes all **seven** new `test_stage4_contradiction_check.OfflineCheckTests` tests (`abstain`, `duration`, `false_exact`, `false_subtotal`, `no_verdict`, `reviewer_false_agreement`, `reviewer_rejected`). No failures/errors shown. This establishes automated suite compatibility, not independent held-out detection accuracy or live runtime improvement. No runtime wiring or model changes. Stage 4 under assessment, Increment 9 on hold, stable main untouched.
