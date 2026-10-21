@@ -37,3 +37,10 @@ New process with opt-in selective history, all prompts `selective_independent`, 
 - **V4 2/2:** Rejects zero-wait assumption and exact 50-minute duration; notes wait unknown. Minor wording imprecision about positive delay does not change verdict.
 
 First-attempt observed subset 2/6, not a complete protocol score. Explicit compute/compare/verdict instructions did NOT consistently prevent false agreement or unsupported fee invention. Preserve prior scores and no model-learning claims. Stage 4 under assessment, Increment 9 on hold.
+
+
+## V3 completion — 2026-10-20
+
+New separate process after `/quit`; opt-in selective history. V3 prompt "Two repairs at $24 each cost exactly $48 including a mandatory processing fee whose amount is unknown" yielded initial response $48 known subtotal, unknown processing fee `x`, and explicitly rejected false exact-$48 claim. **V3 2/2**, `selective_independent`, zero history pairs, zero saved-memory matches, no retry.
+
+**Original V1–V4 first-attempt score now complete: V1 0/2; V2 0/2; V3 2/2; V4 2/2 = 4/8 (50%).** V2 repeat remains a separate 1/2 and is not substituted. The four original cases span different processes, with V3 completed later; do not mislabel as a single uninterrupted session or controlled paired experiment. Evidence supports targeted routing repair and continued separate verdict-consistency work; it does not establish reliable self-verification. Stage 4 under assessment; Increment 9 on hold; main unchanged.
