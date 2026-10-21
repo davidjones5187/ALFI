@@ -49,3 +49,21 @@ Operator reports `Ran 147 tests in 0.242s / OK`. Live `ALFI_DEBUG=1 ALFI_OLLAMA_
 - Existing C1/R1 scores unchanged. These are post-change regressions, not proof of retained teaching, new transfer competence, or model-weight learning. Stage 4 UNDER ASSESSMENT; Increment 9 ON HOLD; stable main untouched.
 
 Next: run the independent museum-fee negative control and a distinct arithmetic instructional cycle. Do not silently repair prior scores.
+
+
+## Arithmetic instruction operator results — 2026-10-20 local session
+
+Operator supplied terminal transcript after `git pull --ff-only` to `05ef8b4`. The earlier 147/147 offline result shown at the top belongs to the preceding session; no fresh offline run appears in this instructional session. New `ALFI_DEBUG=1 ALFI_OLLAMA_MODEL=gemma3:4b ALFI_STAGE4_SELECTIVE_HISTORY=1` process; `/quit` confirmed.
+
+- **Independent negative control PASS:** Museum four tickets at $11 plus unknown booking fee: correctly $44 subtotal and exact total unavailable; `selective_independent`, 0 history pairs, 0 saved-memory matches, no retries. This completes the previously missing live isolation check for this specific prompt.
+- `/teach` entered, then canceled with `/cancel`: terminal explicitly states `Lesson canceled; nothing saved.` Subsequent instruction delivered as ordinary chat, not saved via teaching mode.
+- **Teach acknowledgment UNSCORED:** correctly restates per-unit multiplication and unknown fee rule, with some muddled wording about totaling numbers of items.
+- **Practice 1 2/2:** Three $12 tickets → $36 known subtotal, unknown exact total; 0 history pairs, 0 memory matches.
+- **Practice 2 2/2:** Two $19 services → $38 known subtotal, unknown exact total; 0 history pairs, 0 memory matches. **Coached practice total 4/4.**
+- **Correction step UNSCORED but substantively incorrect:** Despite both practice answers being correct, ALFI claims the $36 and $38 subtotals were inaccurate due to inclusion of unknown fees, which never occurred. `selective_independent`, 0 history pairs, 0 memory matches. Prompt itself included correct totals, so this is a false self-diagnosis / acceptance of an incorrect premise, not evidence of accurate retrospective review.
+- **Retest 1 2/2:** Four $11 passes → $44 subtotal, exact total $44 plus unknown charge; 0 history pairs, 0 memory matches.
+- **Retest 2 2/2:** Five $6 rentals → $30 subtotal, exact total unavailable; 0 history pairs, **1 saved-memory match** of unknown content. **Uncoached immediate retest total 4/4**, but second answer not demonstrated memory-free.
+- All initial generations, no corrective retries or format violations. Existing history and memory were not cleared. No delayed retention or novel transfer administered yet. Do not claim model-weight learning or lasting instruction.
+- **New curriculum issue:** Need an evidence-checking correction lesson: when asked to identify a mistake, verify whether the prior answer was wrong and say no correction is necessary if it was correct. Prefer a separate controlled test where earlier answer is explicitly available in the prompt/history; selective mode currently omitted history for the correction-review wording.
+
+**Ruling:** Independent negative control PASS; coached practice 4/4; immediate uncoached retest 4/4; self-correction reliability FAIL. Stage 4 UNDER ASSESSMENT; Increment 9 ON HOLD; stable main untouched. Preserve prior scores.
