@@ -55,3 +55,8 @@ Operator pulled feature branch at `1dc0c57`. Offline `python3 -m unittest discov
 - "Review your previous answer. Quote the subtotal you gave and say whether any correction is necessary.": `selective_referential`, five history pairs, zero saved-memory matches, original user question, 13 messages; correctly quoted $27 and said no correction necessary. Initial generation, no retry.
 
 **Targeted routing regression PASSED** for this wording and sequence. History still includes up to five pairs rather than selecting a single relevant pair. Do not infer Stage 4 retention/transfer pass, reliable self-verification, or model-weight learning. No changes to stable main. Increment 9 on hold.
+
+
+## Repeat operator verification — 2026-10-21
+
+A further terminal transcript reports **151/151 offline tests passing** (0.237s). In a new live process using `gemma3:4b` and opt-in selective history, the station 3×$9 plus unknown service charge initial question was correctly answered as **$27 subtotal, exact total unknown**; `selective_independent`, 0 history pairs, 0 saved-memory matches, no retry. The next separate turn, `Review your previous answer. Quote the subtotal you gave and say whether any correction is necessary.`, was classified `selective_referential`, included 5 history pairs, 0 saved-memory matches, and correctly said **$27, unknown exact total, no correction necessary**, on the initial generation without retry. This is a **second successful observed live verification for the same prompt pair**, not a novel held-out transfer test. No new code changes or broader Stage 4 promotion. Stable main unchanged; Increment 9 on hold.
