@@ -60,6 +60,39 @@ class Stage4HistoryCharacterizationTests(unittest.TestCase):
                 self.assertEqual(mode, "referential")
                 self.assertEqual(selected, history)
 
+    def test_selector_recognizes_retrospective_review_requests(self):
+        history = [{"user": "Three passes at $9 each plus an unknown fee.",
+                    "assistant": "The subtotal is $27; the exact total is unknown."}]
+        for question in ("Review your previous answer. Quote the subtotal you gave and say whether any correction is necessary.",
+                         "Review your last answer.", "Please review your previous answer."):
+            with self.subTest(question=question):
+                selected, mode = select_stage4_history(question, history)
+                self.assertEqual(mode, "referential")
+                self.assertEqual(selected, history)
+
+    def test_retrospective_review_without_history(self):
+        self.assertEqual(select_stage4_history("Review your previous answer.", []),
+                         ([], "referential_missing"))
+
+    def test_retrospective_review_prompt_contains_actual_answer(self):
+        history = [{"user": "Three passes at $9 each plus an unknown fee.",
+                    "assistant": "The subtotal is $27; the exact total is unknown."}]
+        with patch.dict("os.environ", {"ALFI_STAGE4_SELECTIVE_HISTORY": "1"}):
+            messages, preserved = self._capture(
+                "Review your previous answer. Quote the subtotal.", history, False)
+        self.assertTrue(any(m["role"] == "assistant" and "$27" in m["content"]
+                            for m in messages))
+        self.assertEqual(preserved, history)
+
+    def test_retrospective_selector_keeps_independent_questions_isolated(self):
+        history = [{"user": "Unrelated topic", "assistant": "Old answer"}]
+        for question in ("Review the scientific evidence for plate tectonics.",
+                         "Review this answer: 'Four passes cost $20'.",
+                         "What is the total for three $9 passes and an unknown fee?"):
+            with self.subTest(question=question):
+                self.assertEqual(select_stage4_history(question, history),
+                                 ([], "independent"))
+
     def test_selector_does_not_include_history_for_new_explanation(self):
         history = [{"user": "Explain clouds.", "assistant": "Condensation."}]
         selected, mode = select_stage4_history("Explain how batteries work.", history)
