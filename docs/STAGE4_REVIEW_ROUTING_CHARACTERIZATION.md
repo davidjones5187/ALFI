@@ -1,0 +1,25 @@
+# Stage 4 — Review routing characterization
+
+Authorized 2026-10-20. Diagnostic protocol only, no runtime change. Main untouched.
+
+## Goal
+Determine whether requests to review A.L.F.I.'s own previous response include the actual earlier response in the model prompt. Do not confuse conversation persistence with prompt inclusion.
+
+## Run
+On feature branch, run `ALFI_DEBUG=1 ALFI_OLLAMA_MODEL=gemma3:4b ALFI_STAGE4_SELECTIVE_HISTORY=1 python3 first_ai.py`. Preserve existing history/memory; record debug lines, initial response and retry status. Do not coach between turns.
+
+### Pair A: natural retrospective review
+A1: "A station sells three passes at $9 each plus an unspecified service charge. State the known subtotal and whether the exact total is known."
+A2: "Review your previous answer. Quote the subtotal you gave and say whether any correction is necessary."
+Expected A1 $27 subtotal, exact total unknown. A2 requires previous answer in prompt to be an actual retrospective review. Record `prompt_history_mode`, `prompt_history_pairs`, `prompt_saved_memory_matches`, `prompt_user_question`. If history pairs=0, do not count plausible recall as verified access.
+
+### Pair B: explicit quoted prior answer
+B1: "Review this previous answer verbatim: 'Three passes at $9 each have a $27 subtotal; the additional unspecified charge prevents an exact total.' Is this correct? Say whether a correction is necessary."
+Expected: correct; no correction. This is a self-contained verification control, not proof of memory.
+
+### Pair C: independent negative control
+C1: "A gallery sells five tickets at $8 each plus an unknown booking charge. Can you give the exact total?"
+Expected: $40 subtotal, exact total unknown; `selective_independent`, 0 history pairs.
+
+## Decision
+Report whether the selector omitted history on A2 and whether supplying the prior answer resolves the task. Do not modify selector on this evidence alone. Keep distinct from verdict consistency results.
