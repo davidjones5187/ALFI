@@ -36,3 +36,16 @@ Transfer: explain an unfamiliar device with insufficient specifications, explici
 
 ### Scoring and governance
 Score each answer 0/1/2; minor omissions 1, substantive factual errors/wrong totals 0, correct answers 2. Record initial generation and retry separately, do not pool coached practice with retests, do not retroactively regrade C1 or R1. A single good run does not demonstrate persistent learning or weight updates. Stage 4 remains UNDER ASSESSMENT, Increment 9 ON HOLD, stable `main` untouched.
+
+
+## Operator live regression — 2026-10-20
+
+Operator reports `Ran 147 tests in 0.242s / OK`. Live `ALFI_DEBUG=1 ALFI_OLLAMA_MODEL=gemma3:4b ALFI_STAGE4_SELECTIVE_HISTORY=1`; `/quit` confirmed. All outputs initial generation, no corrective retries.
+
+- Clinic question came **before** autumn leaves (different order from prescribed B1). Initial clinic answer correctly says exact total unknown but incorrectly gives **$18**, not **$36**, for two $18 forms. `Why can't you give an exact figure?` now `selective_referential`, five history pairs, zero saved-memory matches; correctly references missing processing fee but repeats $18 error. **Context routing PASS; arithmetic FAIL.** Initial clinic and autumn prompts each had one saved-memory match; the content of that match was not supplied, so no attribution is possible.
+- Bicycle brake and bicycle light independent questions both received zero history pairs. Light explanation now accurately identifies LED/battery (unlike previous gas-discharge claim). `Which one is more important?` now `selective_referential`, five history pairs, zero saved-memory matches; correctly identifies both items and says relative importance depends on situation. **Context routing and referent answer PASS.**
+- Gratitude reply `Thank you, A.L.F.I. Much appreciated.` classified `selective_independent` with zero history pairs; benign response. **Not a substitute** for the prescribed independent unknown-fee negative control.
+- The independent museum-fee negative control was **not performed**. No evidence yet that the entire live regression plan passed; the offline negative-control tests did pass as part of 147/147.
+- Existing C1/R1 scores unchanged. These are post-change regressions, not proof of retained teaching, new transfer competence, or model-weight learning. Stage 4 UNDER ASSESSMENT; Increment 9 ON HOLD; stable main untouched.
+
+Next: run the independent museum-fee negative control and a distinct arithmetic instructional cycle. Do not silently repair prior scores.
