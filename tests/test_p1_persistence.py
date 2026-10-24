@@ -58,6 +58,26 @@ class PersistenceReliabilityTests(unittest.TestCase):
                 ai.forget_topic("new topic")
         self.assertIn("new_topic", ai.data)
 
+    def test_active_taught_topic_followup_precedes_clarification(self):
+        ai = self.make_ai("one")
+        ai.teach("project", "what is project inception?", "First phase.")
+        self.assertEqual(ai.respond("what is project inception?"), "First phase.")
+        self.assertIn("First phase.", ai.respond("tell me more"))
+
+    def test_no_active_topic_still_clarifies(self):
+        ai = self.make_ai("one")
+        self.assertEqual(ai.respond("tell me more"), "What topic would you like me to explain?")
+
+    def test_generated_followup_does_not_use_taught_topic(self):
+        ai = self.make_ai("one")
+        ai.teach("project", "what is project inception?", "First phase.")
+        ai.respond("what is project inception?")
+        ai.last_source = "generated"
+        ai.history = [{"user": "Explain the weather.", "assistant": "Clouds form."}]
+        with patch.object(ai, "generate", return_value="More on clouds.") as generated:
+            self.assertEqual(ai.respond("tell me more"), "More on clouds.")
+            generated.assert_called_once_with("tell me more")
+
     def test_atomic_replace_failure_preserves_previous_file(self):
         ai = self.make_ai("one")
         ai.record("before", "saved")
