@@ -31,6 +31,7 @@ def tokenize(text):
 class ALFI:
     def __init__(self, memory_file=MEMORY_FILE, use_ollama=True, ollama_url=OLLAMA_URL, ollama_model=None):
         self.memory_file = Path(memory_file)
+        self.history_file = self.memory_file.with_name("conversation_history.json")
         self.use_ollama = use_ollama
         self.ollama_url = ollama_url
         self.ollama_model = ollama_model or os.environ.get("ALFI_OLLAMA_MODEL") or OLLAMA_MODEL
@@ -61,22 +62,39 @@ class ALFI:
             return json.loads(json.dumps(DEFAULT_DATA))
 
     def save(self):
-        self.memory_file.write_text(json.dumps(self.data, indent=2), encoding="utf-8")
+        self._atomic_json_write(self.memory_file, self.data)
+
+    @staticmethod
+    def _atomic_json_write(path, data):
+        """Replace a JSON file atomically; preserve the previous file on failure."""
+        import tempfile
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temp_path = None
+        try:
+            with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=path.parent,
+                                             prefix=f".{path.name}.", suffix=".tmp",
+                                             delete=False) as handle:
+                temp_path = Path(handle.name)
+                json.dump(data, handle, indent=2)
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(temp_path, path)
+        finally:
+            if temp_path is not None:
+                temp_path.unlink(missing_ok=True)
 
     def load_history(self):
         try:
-            data = json.loads(HISTORY_FILE.read_text(encoding="utf-8"))
+            data = json.loads(self.history_file.read_text(encoding="utf-8"))
             return data[-100:] if isinstance(data, list) else []
         except (OSError, ValueError):
             return []
 
     def record(self, message, answer):
-        self.history.append({"user": message, "assistant": answer})
-        self.history = self.history[-100:]
-        try:
-            HISTORY_FILE.write_text(json.dumps(self.history, indent=2), encoding="utf-8")
-        except OSError as exc:
-            print(f"Warning: conversation history not saved: {exc}")
+        updated = (self.history + [{"user": message, "assistant": answer}])[-100:]
+        self._atomic_json_write(self.history_file, updated)
+        self.history = updated
 
     def recent_history(self, limit=5):
         return self.history[-limit:]
@@ -374,7 +392,7 @@ class ALFI:
         self.last_topic = None
         self.last_source = None
         try:
-            HISTORY_FILE.unlink(missing_ok=True)
+            self.history_file.unlink(missing_ok=True)
         except OSError as exc:
             print(f"Warning: history could not be deleted: {exc}")
 
@@ -382,6 +400,7 @@ class ALFI:
         intent = re.sub(r"[^a-z0-9_-]+", "_", intent.strip().lower()).strip("_")
         if not intent or not example.strip() or not response.strip():
             raise ValueError("Topic, example, and response are required.")
+        previous = json.loads(json.dumps(self.data))
         entry = self.data.setdefault(intent, {"examples": [], "responses": []})
         if example in entry["examples"]:
             entry["responses"][entry["examples"].index(example)] = response
@@ -389,7 +408,12 @@ class ALFI:
             entry["examples"].append(example)
             entry["responses"].append(response)
         self.train()
-        self.save()
+        try:
+            self.save()
+        except OSError:
+            self.data = previous
+            self.train()
+            raise
 
 def teaching_mode(ai):
     print("\nTEACHING MODE — type /cancel at any prompt to leave.")
