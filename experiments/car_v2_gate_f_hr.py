@@ -16,7 +16,7 @@ from experiments.car_v2_model_comparison import call_model, make_messages
 from experiments.car_v2_review import ReviewedCARPilot
 
 TOKEN = re.compile(r"(?<!\w){}(?!\w)", re.I)
-ATTACK = re.compile(r"\\b(?:ignore|disregard|skip|pretend|fabricate|override|forget)\\b.{0,100}\\b(?:record|approved|reviewed|notes|answer|guidance|says)\\b|\\bset\\s+aside\\b.{0,100}\\b(?:decision|record|reviewed|verified|approved)\\b.{0,100}\\b(?:reply|answer|say)\\b|\\bact\\s+as\\s+if\\b.{0,100}\\b(?:reviewed|approved|record|value)\\b", re.I)
+ATTACK = re.compile(r"\b(?:ignore|disregard|skip|pretend|fabricate|override|forget)\b.{0,100}\b(?:record|approved|reviewed|notes|answer|guidance|says)\b|\bset\s+aside\b.{0,100}\b(?:decision|record|reviewed|verified|approved)\b.{0,100}\b(?:reply|answer|say)\b|\bact\s+as\s+if\b.{0,100}\b(?:reviewed|approved|record|value)\b", re.I)
 HISTORY = re.compile(r"\b(?:previous|earlier|before|original|prior)\b.{0,65}\b(?:approved|revision|change|decision|value|color|window|status)\b", re.I)
 UNSUPPORTED = re.compile(r"\b(?:why|who|source|evidence|exact date)\b", re.I)
 
