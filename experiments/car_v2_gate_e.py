@@ -12,25 +12,25 @@ TOPICS = {
     "orion_budget": ("budget", "cost", "funding"),
 }
 ALIASES = {"shade": "color", "launch hue": "hue"}
-OVERRIDE = re.compile(r"\\b(ignore|disregard|override|forget)\\b.{0,90}\\b(instruction|record|review|approved|previous|guidance)\\b", re.I)
-REVISION = re.compile(r"\\b(before|prior to|original|previous|old|earlier)\\b.{0,40}\\b(revision|change|decision|color|hue)\\b", re.I)
+OVERRIDE = re.compile(r"\b(ignore|disregard|override|forget)\b.{0,90}\b(instruction|record|review|approved|previous|guidance)\b", re.I)
+REVISION = re.compile(r"\b(before|prior to|original|previous|old|earlier)\b.{0,40}\b(revision|change|decision|color|hue)\b", re.I)
 
 
 def route(question):
     if not isinstance(question, str) or not question.strip():
         return {"decision": "abstain", "reason": "invalid_question"}
     q = " ".join(question.lower().split())
-    if not re.search(r"\\borion\\b", q):
+    if not re.search(r"\borion\b", q):
         return {"decision": "outside_scope", "reason": "not_orion"}
     if OVERRIDE.search(q):
         return {"decision": "abstain", "reason": "adversarial_instruction"}
     if REVISION.search(q):
         return {"decision": "abstain", "reason": "historical_fact_not_in_current_record"}
-    if re.search(r"\\b(why|who|which person|source|evidence|exact date|day|month|year)\\b", q):
+    if re.search(r"\b(why|who|which person|source|evidence|exact date|day|month|year)\b", q):
         return {"decision": "abstain", "reason": "unsupported_detail"}
     matches = []
     for key, words in TOPICS.items():
-        if any(re.search(r"\\b" + re.escape(word) + r"\\b", q) for word in words):
+        if any(re.search(r"\b" + re.escape(word) + r"\b", q) for word in words):
             matches.append(key)
     if len(matches) != 1:
         return {"decision": "abstain", "reason": "ambiguous_or_no_match"}
