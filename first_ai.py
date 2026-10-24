@@ -378,9 +378,15 @@ class ALFI:
         key = re.sub(r"[^a-z0-9_-]+", "_", topic.strip().lower()).strip("_")
         if key not in self.data:
             return False
+        previous = json.loads(json.dumps(self.data))
         del self.data[key]
         self.train()
-        self.save()
+        try:
+            self.save()
+        except OSError:
+            self.data = previous
+            self.train()
+            raise
         if self.last_topic == key:
             self.last_topic = None
             self.last_source = None
