@@ -324,6 +324,12 @@ class ALFI:
                     "and " + self.ollama_model + " is installed. Details: " + str(exc))
 
     def respond(self, message):
+        # A taught-topic follow-up has explicit in-session context even when
+        # the caller has not yet persisted the preceding exchange.
+        if (tokenize(message) in (["tell", "me", "more"], ["more", "about", "that"],
+                                 ["what", "else", "do", "you", "know"])
+                and self.last_source == "taught" and self.last_topic in self.data):
+            return self.topic_details(self.last_topic)
         feedback = feedback_response(message)
         if feedback is not None:
             return feedback
