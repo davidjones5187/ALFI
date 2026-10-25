@@ -33,7 +33,15 @@ def route(question, manifest):
     if DIRECTIVES.search(q) or HISTORY.search(q):
         return {"decision":"abstain","reason":"unsupported_modifier"}
     clean=re.sub(r"\?!$","?",q)
-    clean=PREFIX.sub("",clean,count=1)\n    # A declarative third-party claim is context, never a source of authority.\n    # Resolve only a unique named entity from the original request.\n    if clean.lower()=="what shade was approved?":\n        names=[name for name,d in manifest.items() if any(hits(q,[a]) for a in d["aliases"])]\n        if len(names)==1 and q.lower().startswith("a memo claims "):\n            aliases=manifest[names[0]]["aliases"]\n            entity=next((a for a in aliases if hits(q,[a])),None)\n            if entity is not None:clean="what shade was approved for "+entity+"?"
+    clean=PREFIX.sub("",clean,count=1)
+    # A declarative third-party claim is context, never a source of authority.
+    # Resolve only a unique named entity from the original request.
+    if clean.lower()=="what shade was approved?":
+        names=[name for name,d in manifest.items() if any(hits(q,[a]) for a in d["aliases"])]
+        if len(names)==1 and q.lower().startswith("a memo claims "):
+            aliases=manifest[names[0]]["aliases"]
+            entity=next((a for a in aliases if hits(q,[a])),None)
+            if entity is not None:clean="what shade was approved for "+entity+"?"
     for form in FORMS:
         match=form.fullmatch(clean)
         if not match: continue
