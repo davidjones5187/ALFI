@@ -18,6 +18,7 @@ FORMS = (
     re.compile(r"(?:what|which) (?P<attr>.+?) did (?P<entity>.+?) approve\?", re.I),
     re.compile(r"(?:what|which) (?P<attr>.+?) was approved for (?P<entity>.+?)\?", re.I),
     re.compile(r"what was the approved (?P<attr>.+?) for (?P<entity>.+?)\?", re.I),
+    re.compile(r"the approved (?P<attr>.+?) for (?P<entity>.+?)\?", re.I),
     re.compile(r"(?:give|provide) (?:me )?(?:the )?(?:approved|reviewed) (?P<attr>.+?) (?:of|for) (?P<entity>.+?)\.", re.I),
 )
 def route(question, manifest):
