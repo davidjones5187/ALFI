@@ -37,6 +37,33 @@ def resolve_followup(message, history, max_turns=5):
 DETAIL = re.compile(r"\b(?:in detail|step.by.step|thoroughly|comprehensive|deep dive|elaborate)\b", re.I)
 BRIEF = re.compile(r"\b(?:briefly|short answer|in one sentence|summari[sz]e|keep it short)\b", re.I)
 
+# Stage 4: distinguish progression requests from generic follow-ups.
+# Advisory only; never retrieves, edits, or persists memory.
+ANOTHER_EXAMPLE = re.compile(
+    r"^give (?:me )?another example(?: of (?:that|it))?[?.!]*$", re.I
+)
+MORE_DETAIL = re.compile(
+    r"^(?:tell me )?more(?: about (?:that|it))?[?.!]*$", re.I
+)
+HOW_IT_WORKS = re.compile(r"^how does (?:that|it) work[?.!]*$", re.I)
+
+def followup_progression_guidance(message, history):
+    """Return narrow next-step instructions only for resolved follow-ups."""
+    if not isinstance(message, str) or resolve_followup(message, history) is None:
+        return ""
+    question = message.strip()
+    if ANOTHER_EXAMPLE.fullmatch(question):
+        return ("Provide a DIFFERENT concrete example from the previous answer. "
+                "Describe its specific situation and outcome; do not repeat the prior "
+                "example or substitute a definition for an example.")
+    if MORE_DETAIL.fullmatch(question):
+        return ("Add a NEW substantive detail, mechanism, consequence, or practical "
+                "application beyond the previous answer. Do not merely paraphrase it.")
+    if HOW_IT_WORKS.fullmatch(question):
+        return ("Explain the mechanism or sequence of steps for the established "
+                "subject, without changing topics or restating only its definition.")
+    return ""
+
 def response_guidance(message, history):
     """Produce bounded response instructions without modifying user input."""
     resolved = resolve_followup(message, history)
@@ -55,18 +82,36 @@ def response_guidance(message, history):
         continuity = ("Treat the current question on its own terms. If it introduces "
                       "a different subject, answer that subject without dragging in "
                       "the previous topic. Do not erase history.")
-    return depth + " " + continuity
+    progression = followup_progression_guidance(message, history)
+    return depth + " " + continuity + (" " + progression if progression else "")
 
 # Small, deterministic social acknowledgments. No memory writes or model claims.
 SOCIAL_THANKS = re.compile(r"^(?:thanks(?: a lot)?|thank you(?: very much)?|appreciate it)[.! ]*$", re.I)
 SOCIAL_PRAISE = re.compile(r"^(?:great job|good job|well done|nice work|that's helpful|that was helpful|you did great)[.! ]*$", re.I)
 
+# Explicit social-only variants. Anchored to avoid swallowing substantive requests.
+SOCIAL_EXTENDED = re.compile(
+    r"^(?:thank you|thanks)(?:\s+very much|\s+a lot)?"
+    r"(?:\s+for explaining that|\s*,?\s*a\.?l\.?f\.?i\.?)?"
+    r"(?:\s*,?\s*(?:well done|great job|good job|nice work))?[.! ]*$"
+    r"|^excellent work,?\s*a\.?l\.?f\.?i\.?[.! ]*$",
+    re.I,
+)
+
+def _extended_social_intent(message):
+    """Return a social intent only for an entire standalone acknowledgment."""
+    if not SOCIAL_EXTENDED.fullmatch(message.strip()):
+        return None
+    if re.search(r"\b(?:well done|great job|good job|nice work|excellent work)\b", message, re.I):
+        return "praise"
+    return "thanks"
+
 def natural_acknowledgment(message):
     """Handle clear social feedback without invoking a lengthy explanation."""
     message = message.strip()
-    if SOCIAL_THANKS.fullmatch(message):
+    if SOCIAL_THANKS.fullmatch(message) or _extended_social_intent(message) == "thanks":
         return "You're welcome!"
-    if SOCIAL_PRAISE.fullmatch(message):
+    if SOCIAL_PRAISE.fullmatch(message) or _extended_social_intent(message) == "praise":
         return "Thanks! Glad that helped."
     return None
 
@@ -89,7 +134,7 @@ def conversational_intent(message):
         return "other"
     if CORRECTION.match(message):
         return "correction"
-    if ACKNOWLEDGMENT.fullmatch(message):
+    if ACKNOWLEDGMENT.fullmatch(message) or _extended_social_intent(message):
         return "acknowledgment"
     if FOLLOWUP.fullmatch(message):
         return "followup"
@@ -134,9 +179,9 @@ def feedback_intent(message):
         return "correction"
     if DISSATISFACTION.fullmatch(message):
         return "dissatisfaction"
-    if SOCIAL_PRAISE.fullmatch(message):
+    if SOCIAL_PRAISE.fullmatch(message) or _extended_social_intent(message) == "praise":
         return "praise"
-    if SOCIAL_THANKS.fullmatch(message):
+    if SOCIAL_THANKS.fullmatch(message) or _extended_social_intent(message) == "thanks":
         return "thanks"
     return "other"
 
@@ -327,6 +372,9 @@ def response_policy(message, history):
         parts.append("Adam uses bias-corrected first and second gradient moments; never invent its update formula.")
     if re.search(r"\bquantum\b", message, re.I):
         parts.append("Avoid broad unverified quantum speedup claims for unconstrained, linear, quadratic or semidefinite optimization.")
+    progression = followup_progression_guidance(message, history)
+    if progression:
+        parts.append(progression)
     parts.append(precision_guidance(message, history))
     return " ".join(parts)
 
