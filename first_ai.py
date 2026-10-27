@@ -539,6 +539,31 @@ def inspect_text_file(filename):
         "words": len(content.split()),
     }
 
+
+def guided_inspection():
+    """Run an explicitly approved, read-only file inspection."""
+    filename = input("A.L.F.I.: Which text file should I inspect? ").strip()
+
+    if not filename:
+        print("A.L.F.I.: Inspection canceled.")
+        return
+
+    print(f"A.L.F.I.: Requested file: {filename}")
+    approval = input("A.L.F.I.: Inspect this file? [y/N]: ").strip().lower()
+
+    if approval not in ("y", "yes"):
+        print("A.L.F.I.: Inspection canceled.")
+        return
+
+    try:
+        result = inspect_text_file(filename)
+        print(
+            f"A.L.F.I.: Inspection complete: "
+            f"{result['lines']} lines, {result['words']} words."
+        )
+    except (ValueError, OSError) as exc:
+        print(f"A.L.F.I.: Inspection failed: {exc}")
+
 def main():
     ai = ALFI()
     print("A.L.F.I. 1.6-dev | Conversational Intelligence")
@@ -631,6 +656,14 @@ def main():
                 print("A.L.F.I.:", turn["assistant"])
         elif command == "/teach":
             teaching_mode(ai)
+        elif command in {
+            "can you inspect a text file for me?",
+            "can you inspect a text file",
+            "inspect a text file for me",
+            "i want you to inspect a text file",
+        }:
+            guided_inspection()
+
         else:
             answer = ai.respond(message)
             print("A.L.F.I.:", answer)
