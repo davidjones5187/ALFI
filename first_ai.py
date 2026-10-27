@@ -131,24 +131,71 @@ class ALFI:
         return top, weights[top] / sum(weights.values())
 
     def find_knowledge(self, message):
-        """Find the most relevant taught example, avoiding low-information matches."""
+        """Retrieve taught examples with conservative attribute compatibility."""
         query = set(tokenize(message)) - STOPWORDS
         if not query:
             return None
-        best = None
-        best_score = 0.0
+
+        measurement_terms = {
+            "measure", "measures", "measured",
+            "measurement", "measurements", "measuring",
+        }
+        manufacturer_terms = {
+            "manufacture", "manufactured", "manufacturer",
+            "manufacturers", "made", "built", "produced",
+        }
+
+        def attribute(terms):
+            if terms & manufacturer_terms:
+                return "manufacturer"
+            if terms & measurement_terms:
+                return "measurement"
+            return None
+
+        query_attribute = attribute(query)
+        candidates = []
+
         for topic, entry in self.data.items():
             for index, example in enumerate(entry["examples"]):
                 terms = set(tokenize(example)) - STOPWORDS
+                example_attribute = attribute(terms)
+
+                if query_attribute != example_attribute:
+                    continue
+
                 overlap = len(query & terms)
                 if not overlap:
                     continue
+
                 score = overlap / len(query | terms)
-                # Require substantial shared content; don't guess from one generic word.
-                if score > best_score:
-                    best_score = score
-                    best = (topic, index)
-        return best if best_score >= 0.60 else None
+                if score >= 0.60:
+                    candidates.append((score, topic, index))
+                    continue
+
+                shared = query & terms
+                has_number = any(any(c.isdigit() for c in t) for t in shared)
+                has_name = any(
+                    len(t) >= 5 and not any(c.isdigit() for c in t)
+                    and t not in measurement_terms
+                    for t in shared
+                )
+
+                if (
+                    query_attribute == "measurement"
+                    and has_number
+                    and has_name
+                ):
+                    candidates.append((0.60, topic, index))
+
+        if not candidates:
+            return None
+
+        candidates.sort(reverse=True)
+        if len(candidates) > 1 and candidates[0][0] == candidates[1][0]:
+            return None
+
+        _, topic, index = candidates[0]
+        return topic, index
 
     def topic_details(self, topic):
         entry = self.data.get(topic, {})
