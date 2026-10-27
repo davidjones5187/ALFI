@@ -10,7 +10,7 @@ import urllib.request
 from collections import Counter
 from pathlib import Path
 from memory_intelligence import MemoryStore
-from conversational_intelligence import resolve_followup, response_guidance, natural_acknowledgment, clarification_needed, conversation_guidance, feedback_response, quality_guidance, adaptive_guidance, adaptive_clarification, precision_guidance, length_guidance, increment7_guidance, contextual_subject, response_policy, response_needs_revision, format_violation, factual_revision_guidance, select_stage4_history
+from conversational_intelligence import resolve_followup, response_guidance, natural_acknowledgment, clarification_needed, conversation_guidance, feedback_response, quality_guidance, adaptive_guidance, adaptive_clarification, precision_guidance, length_guidance, increment7_guidance, contextual_subject, response_policy, response_needs_revision, format_violation, factual_revision_guidance, select_stage4_history, select_stage5_r2_history
 
 MEMORY_FILE = Path(__file__).with_name("ai_memory.json")
 HISTORY_FILE = Path(__file__).with_name("conversation_history.json")
@@ -227,11 +227,11 @@ class ALFI:
         self.diagnostic("model", self.ollama_model)
         # Diagnostic-only context isolation; does not alter stored history.
         history_enabled = os.environ.get("ALFI_DIAGNOSTIC_NO_HISTORY") != "1"
-        context_history = self.recent_history(5) if history_enabled else []
-        history_mode = "normal" if history_enabled else "excluded"
-        if history_enabled and os.environ.get("ALFI_STAGE4_SELECTIVE_HISTORY") == "1":
-            context_history, selection = select_stage4_history(message, context_history)
-            history_mode = "selective_" + selection
+        context_history = []
+        history_mode = "excluded"
+        if history_enabled:
+            context_history, selection = select_stage5_r2_history(message, self.history)
+            history_mode = "r2_" + selection
         self.diagnostic("prompt_history_mode", history_mode)
         messages = [{"role": "system", "content": (
             "You are A.L.F.I. (Artificial Lifeform — First Iteration), "
@@ -347,6 +347,22 @@ class ALFI:
         historical = self.history_question_answer(message)
         if historical is not None:
             return historical
+        # Answer explicit historical corrections from user evidence only.
+        correction_history, correction_mode = select_stage5_r2_history(
+            message, self.history
+        )
+        if correction_mode == "explicit_correction" and correction_history:
+            import re
+            evidence = correction_history[0]["user"]
+            match = re.search(
+                r"\bis\s+([A-Za-z][A-Za-z0-9_-]*)\s*,?\s*not\s+"
+                r"([A-Za-z][A-Za-z0-9_-]*)\b",
+                evidence,
+                re.IGNORECASE,
+            )
+            if match:
+                return f"The corrected model is {match.group(1)}, not {match.group(2)}."
+
         direct = self.direct_memory_answer(message)
         if direct is not None:
             return direct

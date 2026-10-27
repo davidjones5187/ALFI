@@ -446,3 +446,36 @@ def select_stage4_history(message, history, max_turns=5):
                 if isinstance(turn, dict) and isinstance(turn.get("user"), str)
                 and isinstance(turn.get("assistant"), str)]
     return selected, "referential" if selected else "referential_missing"
+
+
+def select_stage5_r2_history(message, history):
+    """Select only user-grounded, relevant historical evidence for retrospective requests.
+
+    All independent questions remain isolated. For legacy short referential requests,
+    preserve the existing Stage 4 selector. Never promote chat to saved memory.
+    """
+    question = message.strip()
+    if not question or COMMAND.match(question):
+        return [], "independent"
+    original = re.fullmatch(
+        r"return to ([a-z][a-z -]*?)\.\s*what was the original topic\??",
+        question, re.I)
+    corrected = re.fullmatch(
+        r"what is the corrected model of the fictional ([a-z][a-z -]*?) device\??",
+        question, re.I)
+    if original:
+        topic = original.group(1).strip().lower()
+        for turn in history:
+            prior = turn.get("user", "") if isinstance(turn, dict) else ""
+            if re.fullmatch(r"explain\s+" + re.escape(topic) + r"[?.!]*", prior.strip(), re.I):
+                return [{"user": prior, "assistant": ""}], "original_topic"
+        return [], "original_topic_missing"
+    if corrected:
+        topic = corrected.group(1).strip().lower()
+        for turn in reversed(history):
+            prior = turn.get("user", "") if isinstance(turn, dict) else ""
+            if (re.match(r"^correction\s*:", prior.strip(), re.I)
+                    and re.search(r"\b" + re.escape(topic) + r"\b", prior, re.I)):
+                return [{"user": prior, "assistant": ""}], "explicit_correction"
+        return [], "explicit_correction_missing"
+    return select_stage4_history(question, history[-5:])
