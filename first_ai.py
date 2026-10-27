@@ -515,10 +515,34 @@ def teaching_mode(ai):
     except (ValueError, OSError) as exc:
         print(f"A.L.F.I.: Could not save lesson: {exc}")
 
+
+def inspect_text_file(filename):
+    """Return deterministic statistics for a local UTF-8 text file."""
+    path = Path(filename).expanduser()
+
+    if path.suffix.lower() != ".txt":
+        raise ValueError("Only .txt files are supported.")
+
+    if not path.is_file():
+        raise ValueError("File not found or not a regular file.")
+
+    if path.stat().st_size > 1024 * 1024:
+        raise ValueError("File exceeds the 1 MB limit.")
+
+    try:
+        content = path.read_text(encoding="utf-8")
+    except UnicodeError:
+        raise ValueError("File is not valid UTF-8 text.")
+
+    return {
+        "lines": len(content.splitlines()),
+        "words": len(content.split()),
+    }
+
 def main():
     ai = ALFI()
     print("A.L.F.I. 1.6-dev | Conversational Intelligence")
-    print("Commands: /teach, /knowledge, /forget, /history, /clearhistory, /remember, /memories, /recall, /correct, /forgetmemory, /help, /quit")
+    print("Commands: /inspect, /teach, /knowledge, /forget, /history, /clearhistory, /remember, /memories, /recall, /correct, /forgetmemory, /help, /quit")
     while True:
         try:
             message = input("You: ").strip()
@@ -574,8 +598,19 @@ def main():
                     print("Memory removed." if ai.structured_memory.forget(key) else "Memory not found.")
                 except OSError as exc:
                     print("Deletion failed:", exc)
+        elif command == "/inspect":
+            filename = input("Text file path: ").strip()
+            try:
+                result = inspect_text_file(filename)
+                print(
+                    f"A.L.F.I.: {result['lines']} lines, "
+                    f"{result['words']} words."
+                )
+            except (ValueError, OSError) as exc:
+                print(f"A.L.F.I.: Inspection failed: {exc}")
+
         elif command == "/help":
-            print("/teach lesson | /knowledge topics | /forget topic | /history chats | /clearhistory erase chats | /remember save | /memories list | /recall search | /correct revise | /forgetmemory delete | /quit exit")
+            print("/inspect text file | /teach lesson | /knowledge topics | /forget topic | /history chats | /clearhistory erase chats | /remember save | /memories list | /recall search | /correct revise | /forgetmemory delete | /quit exit")
         elif command == "/forget":
             topic = input("Topic to forget: ").strip()
             if topic and input(f"Delete taught topic {topic!r}? [y/N]: ").strip().lower() in ("y", "yes"):
