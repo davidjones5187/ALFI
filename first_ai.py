@@ -287,6 +287,12 @@ class ALFI:
             "Your model weights do not change during chat. Conversation history is temporary context, "
             "and only /teach or /remember saves explicitly provided facts or lessons. Never invent past interactions or "
             "claim to have learned or updated knowledge from ordinary conversation. "
+            "A filename or file path does not mean you have accessed the file. "
+            "Never claim to have opened, read, inspected, or verified a local file "
+            "unless its contents were explicitly provided through an authorized workflow. "
+            "Do not invent the contents of an unread document. "
+            "When asked about an unread local file, explain that its contents must "
+            "first be supplied through the supervised document-reading workflow. "
             "For examples, use a concrete external scenario, not a story about your own learning. "
             "Never say that chatting retrains your model. Chat logs can persist locally. A memory source such as explicit /correct records how a user entered a value, NOT independent verification. Never claim a saved memory was externally verified merely because of its source label."
         )}]
@@ -371,6 +377,10 @@ class ALFI:
                     "and " + self.ollama_model + " is installed. Details: " + str(exc))
 
     def respond(self, message):
+        unread_file = unread_local_file_response(message)
+        if unread_file is not None:
+            return unread_file
+
         # A taught-topic follow-up has explicit in-session context even when
         # the caller has not yet persisted the preceding exchange.
         if (tokenize(message) in (["tell", "me", "more"], ["more", "about", "that"],
@@ -539,6 +549,35 @@ def inspect_text_file(filename):
         "words": len(content.split()),
     }
 
+
+
+def unread_local_file_response(message):
+    """Avoid guessing the contents of a named, unread local text file."""
+    text = message.lower()
+
+    # Only intercept explicit local .txt paths.
+    local_path = re.search(
+        r"(?:~\/|\/|\.\/)[^\s?]+\.txt\b",
+        message,
+        re.IGNORECASE,
+    )
+    if not local_path:
+        return None
+
+    # A path alone is not necessarily a request about its contents.
+    content_question = bool(re.search(
+        r"\b(?:what|describe|explain|summarize|summary|"
+        r"contents?|about|according|read|inside)\b",
+        text,
+    ))
+    if not content_question:
+        return None
+
+    return (
+        "I haven't read that file. I can examine a local .txt file "
+        "through my supervised document Q&A workflow, with your approval. "
+        "Type 'Ask questions about a document' to begin."
+    )
 
 
 def is_inspection_request(message):
