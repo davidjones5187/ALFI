@@ -540,6 +540,36 @@ def inspect_text_file(filename):
     }
 
 
+
+def is_inspection_request(message):
+    """Recognize explicit requests for read-only text-file statistics."""
+    words = set(re.findall(r"[a-z]+", message.lower()))
+
+    action = bool(words & {
+        "inspect", "analyze", "analyse", "check", "count"
+    })
+    target = bool(words & {
+        "file", "document", "txt"
+    })
+    statistics = bool(words & {
+        "words", "lines", "count", "statistics"
+    })
+
+    question = (
+        "how many words" in message.lower()
+        or "how many lines" in message.lower()
+    )
+
+    destructive = bool(words & {
+        "delete", "remove", "erase", "overwrite", "modify"
+    })
+
+    return not destructive and (
+        (action and target)
+        or (question and target)
+        or (statistics and target and "how" in words)
+    )
+
 def guided_inspection():
     """Run an explicitly approved, read-only file inspection."""
     filename = input("A.L.F.I.: Which text file should I inspect? ").strip()
@@ -656,12 +686,7 @@ def main():
                 print("A.L.F.I.:", turn["assistant"])
         elif command == "/teach":
             teaching_mode(ai)
-        elif command in {
-            "can you inspect a text file for me?",
-            "can you inspect a text file",
-            "inspect a text file for me",
-            "i want you to inspect a text file",
-        }:
+        elif is_inspection_request(message):
             guided_inspection()
 
         else:
