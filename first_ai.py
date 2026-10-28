@@ -583,15 +583,20 @@ def is_summarization_request(message):
 
 
 def is_document_qa_request(message):
-    """Recognize explicit requests to question a document."""
-    text = message.lower()
-    return any(phrase in text for phrase in (
-        "ask questions about a document",
-        "ask questions about a text file",
-        "question a document",
-        "questions about my document",
-        "chat with a document",
-    ))
+    """Recognize requests to start supervised document Q&A."""
+    text = message.lower().strip()
+
+    if re.search(r"\b(?:not|never|without|don't|do not)\b", text):
+        return False
+
+    patterns = (
+        r"\bask\s+(?:me\s+)?questions?\s+about\s+(?:(?:a|the|my|this)\s+)?(?:document|text file|txt file)\b",
+        r"\bquestions?\s+(?:about|on)\s+(?:(?:a|the|my|this)\s+)?(?:document|text file|txt file)\b",
+        r"\b(?:chat|talk)\s+with\s+(?:(?:a|the|my|this)\s+)?(?:document|text file|txt file)\b",
+        r"\bquestion\s+(?:(?:a|the|my|this)\s+)?(?:document|text file|txt file)\b",
+    )
+
+    return any(re.search(pattern, text) for pattern in patterns)
 
 
 def guided_document_qa(ai):
