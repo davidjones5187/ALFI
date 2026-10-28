@@ -349,6 +349,9 @@ def response_policy(message, history):
         "Answer the current question directly and accurately.",
         "Do not invent memories, verification, or model learning.",
         "Distinguish established results from hypothetical applications.",
+        "If available information is insufficient, acknowledge uncertainty rather than inventing an answer.",
+        "Never invent project history, file contents, test results, or completed actions.",
+        "When evidence is missing, briefly identify what information would establish the answer.",
     ]
     if FORMAT_DIGITS.search(message):
         parts.append("STRICT FORMAT: output numeric digits only; no words or punctuation.")
