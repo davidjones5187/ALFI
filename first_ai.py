@@ -377,6 +377,10 @@ class ALFI:
                     "and " + self.ollama_model + " is installed. Details: " + str(exc))
 
     def respond(self, message):
+        shell_response = shell_command_response(message)
+        if shell_response is not None:
+            return shell_response
+
         unread_file = unread_local_file_response(message)
         if unread_file is not None:
             return unread_file
@@ -549,6 +553,26 @@ def inspect_text_file(filename):
         "words": len(content.split()),
     }
 
+
+
+def shell_command_response(message):
+    """Prevent conversational claims of executing pasted shell commands."""
+    text = message.strip()
+
+    if re.match(
+        r"^(?:cd\s+\S+\s*&&\s*)?"
+        r"(?:git\s+(?:add|commit|push|pull|status|diff|log)\b|"
+        r"python3?\s+\S+\.py\b)",
+        text,
+        re.IGNORECASE,
+    ):
+        return (
+            "That appears to be a terminal command. "
+            "I haven't executed it. Run it in your Mac terminal "
+            "if you want to perform that action."
+        )
+
+    return None
 
 
 def unread_local_file_response(message):
