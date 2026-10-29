@@ -4,6 +4,8 @@ Plans are proposals. Creating a plan never executes its steps.
 """
 
 import json
+import os
+import urllib.request
 from dataclasses import dataclass
 from typing import Tuple
 
@@ -95,3 +97,55 @@ def parse_model_plan(objective, response):
         assumptions=data.get("assumptions", []),
         uncertainties=data.get("uncertainties", []),
     )
+
+
+def generate_model_plan(
+    objective,
+    model=None,
+    url="http://127.0.0.1:11434/api/chat",
+    timeout=90,
+):
+    """Request a proposed plan from Ollama without executing actions."""
+    if not isinstance(objective, str) or not objective.strip():
+        raise ValueError("A plan requires a nonempty objective.")
+
+    system_prompt = (
+        "You are A.L.F.I.'s supervised planning assistant. "
+        "Return only a JSON object with these fields: "
+        "steps (a nonempty list of strings), "
+        "assumptions (a list of strings), "
+        "uncertainties (a list of strings). "
+        "Do not include approval, execution, status, or objective fields. "
+        "Propose actions only. Never claim that actions were performed. "
+        "Do not assume access to files, memory, tools, or external systems."
+    )
+
+    payload = json.dumps({
+        "model": model or os.environ.get("ALFI_OLLAMA_MODEL") or "gemma3:4b",
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": objective.strip()},
+        ],
+        "stream": False,
+        "format": "json",
+    }).encode("utf-8")
+
+    request = urllib.request.Request(
+        url,
+        data=payload,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        result = json.load(response)
+
+    if not isinstance(result, dict):
+        raise ValueError("Ollama returned an invalid response.")
+
+    message = result.get("message")
+    if not isinstance(message, dict):
+        raise ValueError("Ollama response is missing its message.")
+
+    content = message.get("content")
+    return parse_model_plan(objective, content)

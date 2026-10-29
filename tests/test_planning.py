@@ -184,5 +184,149 @@ class PlanningTests(unittest.TestCase):
                     parse_model_plan("Inspect memory", response)
 
 
+
+class OllamaPlanningTests(unittest.TestCase):
+
+    def test_valid_ollama_proposal(self):
+        import io
+        import json
+        from unittest.mock import patch
+        from planning import generate_model_plan
+
+        content = json.dumps({
+            "steps": ["Inspect tests", "Propose improvements"],
+            "assumptions": [],
+            "uncertainties": []
+        })
+        response = {"message": {"content": content}}
+
+        with patch(
+            "planning.urllib.request.urlopen",
+            return_value=io.BytesIO(json.dumps(response).encode())
+        ) as mock:
+            plan = generate_model_plan("Improve test coverage")
+
+        self.assertEqual(plan.status, "proposed")
+        self.assertEqual(len(plan.steps), 2)
+        self.assertTrue(all(s.requires_approval for s in plan.steps))
+        mock.assert_called_once()
+
+    def test_request_is_isolated_json_post(self):
+        import io
+        import json
+        from unittest.mock import patch
+        from planning import generate_model_plan
+
+        def fake_urlopen(request, timeout):
+            payload = json.loads(request.data)
+            self.assertEqual(request.get_method(), "POST")
+            self.assertEqual(timeout, 90)
+            self.assertEqual(payload["model"], "gemma3:4b")
+            self.assertEqual(payload["format"], "json")
+            self.assertFalse(payload["stream"])
+            self.assertEqual(len(payload["messages"]), 2)
+            self.assertEqual(
+                payload["messages"][1]["content"],
+                "Inspect testing"
+            )
+            self.assertNotIn("tools", payload)
+
+            response = {
+                "message": {
+                    "content": '{"steps":["Review tests"]}'
+                }
+            }
+            return io.BytesIO(json.dumps(response).encode())
+
+        with patch(
+            "planning.urllib.request.urlopen",
+            side_effect=fake_urlopen
+        ):
+            generate_model_plan("Inspect testing")
+
+    def test_rejects_invalid_model_json(self):
+        import io
+        import json
+        from unittest.mock import patch
+        from planning import generate_model_plan
+
+        response = {"message": {"content": "not valid JSON"}}
+
+        with patch(
+            "planning.urllib.request.urlopen",
+            return_value=io.BytesIO(json.dumps(response).encode())
+        ):
+            with self.assertRaises(ValueError):
+                generate_model_plan("Inspect testing")
+
+    def test_rejects_missing_model_message(self):
+        import io
+        from unittest.mock import patch
+        from planning import generate_model_plan
+
+        with patch(
+            "planning.urllib.request.urlopen",
+            return_value=io.BytesIO(b'{}')
+        ):
+            with self.assertRaises(ValueError):
+                generate_model_plan("Inspect testing")
+
+
+    def test_model_configuration_precedence(self):
+        import io
+        import json
+        from unittest.mock import patch
+        from planning import generate_model_plan
+
+        def verify(expected, **kwargs):
+            def fake_urlopen(request, timeout):
+                payload = json.loads(request.data)
+                self.assertEqual(payload["model"], expected)
+
+                response = {
+                    "message": {
+                        "content": '{"steps":["Review proposed work"]}'
+                    }
+                }
+                return io.BytesIO(json.dumps(response).encode())
+
+            with patch(
+                "planning.urllib.request.urlopen",
+                side_effect=fake_urlopen,
+            ) as mock:
+                plan = generate_model_plan("Prepare a plan", **kwargs)
+
+            self.assertEqual(plan.status, "proposed")
+            self.assertTrue(
+                all(step.requires_approval for step in plan.steps)
+            )
+            mock.assert_called_once()
+
+        with patch.dict(
+            "os.environ",
+            {"ALFI_OLLAMA_MODEL": "test-model"},
+        ):
+            verify("explicit-model", model="explicit-model")
+            verify("test-model")
+
+        with patch.dict(
+            "os.environ",
+            {"ALFI_OLLAMA_MODEL": ""},
+        ):
+            verify("gemma3:4b")
+
+    def test_network_failure_propagates(self):
+        from urllib.error import URLError
+        from unittest.mock import patch
+        from planning import generate_model_plan
+
+        with patch(
+            "planning.urllib.request.urlopen",
+            side_effect=URLError("Simulated connection failure")
+        ):
+            with self.assertRaises(URLError):
+                generate_model_plan("Inspect testing")
+
+
 if __name__ == "__main__":
     unittest.main()
