@@ -3,6 +3,7 @@
 Plans are proposals. Creating a plan never executes its steps.
 """
 
+import json
 from dataclasses import dataclass
 from typing import Tuple
 
@@ -54,4 +55,43 @@ def create_plan(objective, steps, assumptions=(), uncertainties=()):
         steps=tuple(validated_steps),
         assumptions=tuple(value.strip() for value in assumptions),
         uncertainties=tuple(value.strip() for value in uncertainties),
+    )
+
+
+def parse_model_plan(objective, response):
+    """Validate a model's JSON proposal without executing any actions."""
+    if not isinstance(response, str):
+        raise ValueError("Model response must be a JSON string.")
+
+    def reject_duplicate_keys(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError(f"Duplicate JSON field: {key}")
+            result[key] = value
+        return result
+
+    try:
+        data = json.loads(
+            response,
+            object_pairs_hook=reject_duplicate_keys,
+        )
+    except json.JSONDecodeError as exc:
+        raise ValueError("Model response is not valid JSON.") from exc
+
+    if not isinstance(data, dict):
+        raise ValueError("Model response must be a JSON object.")
+
+    allowed_fields = {"steps", "assumptions", "uncertainties"}
+    if set(data) - allowed_fields:
+        raise ValueError("Model response contains unsupported fields.")
+
+    if "steps" not in data or not isinstance(data["steps"], list):
+        raise ValueError("Model response requires a list of steps.")
+
+    return create_plan(
+        objective=objective,
+        steps=data["steps"],
+        assumptions=data.get("assumptions", []),
+        uncertainties=data.get("uncertainties", []),
     )
