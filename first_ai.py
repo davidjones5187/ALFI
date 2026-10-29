@@ -296,7 +296,19 @@ class ALFI:
             "For examples, use a concrete external scenario, not a story about your own learning. "
             "Never say that chatting retrains your model. Chat logs can persist locally. A memory source such as explicit /correct records how a user entered a value, NOT independent verification. Never claim a saved memory was externally verified merely because of its source label."
         )}]
-        relevant = self.structured_memory.search(message, limit=3)
+        # Use stronger key relevance for automatic conversational memory.
+        # Explicit /recall continues using MemoryStore.search unchanged.
+        query_terms = set(tokenize(message)) - STOPWORDS
+        candidates = self.structured_memory.search(message, limit=5)
+        relevant = []
+        for item in candidates:
+            key_terms = set(tokenize(item["key"])) - STOPWORDS
+            overlap = len(query_terms & key_terms)
+            required = min(2, len(key_terms))
+            if required and overlap >= required:
+                relevant.append(item)
+            if len(relevant) == 3:
+                break
         if relevant:
             facts = "\n".join(f"{item['kind']} ({item['key']}; source: {item['source']}): {item['value']}" for item in relevant)
             messages.append({"role": "system", "content": "User-provided saved memories, not independently verified:\n" + facts})
