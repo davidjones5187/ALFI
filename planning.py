@@ -40,9 +40,18 @@ def create_plan(objective, steps, assumptions=(), uncertainties=()):
     if not validated_steps:
         raise ValueError("A plan requires at least one step.")
 
+    for field_name, values in (
+        ("assumptions", assumptions),
+        ("uncertainties", uncertainties),
+    ):
+        if not isinstance(values, (list, tuple)):
+            raise ValueError(f"{field_name} must be a list or tuple.")
+        if any(not isinstance(value, str) or not value.strip() for value in values):
+            raise ValueError(f"{field_name} must contain nonempty strings.")
+
     return Plan(
         objective=objective.strip(),
         steps=tuple(validated_steps),
-        assumptions=tuple(assumptions),
-        uncertainties=tuple(uncertainties),
+        assumptions=tuple(value.strip() for value in assumptions),
+        uncertainties=tuple(value.strip() for value in uncertainties),
     )

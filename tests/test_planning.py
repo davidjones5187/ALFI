@@ -56,5 +56,50 @@ class PlanningTests(unittest.TestCase):
         self.assertFalse(hasattr(plan, "run"))
 
 
+    def test_metadata_validation(self):
+        invalid_cases = [
+            {"assumptions": "single string"},
+            {"uncertainties": "single string"},
+            {"assumptions": [""]},
+            {"uncertainties": ["   "]},
+            {"assumptions": [None]},
+            {"uncertainties": [42]},
+            {"assumptions": {"unexpected": "mapping"}},
+            {"uncertainties": None},
+        ]
+
+        for metadata in invalid_cases:
+            with self.subTest(metadata=metadata):
+                with self.assertRaises(ValueError):
+                    create_plan("Inspect memory", ["Review retrieval"], **metadata)
+
+    def test_metadata_whitespace_normalization(self):
+        plan = create_plan(
+            "Inspect memory",
+            ["Review retrieval"],
+            assumptions=["  Existing records are preserved  "],
+            uncertainties=("  Retrieval accuracy is unknown  ",),
+        )
+
+        self.assertEqual(
+            plan.assumptions,
+            ("Existing records are preserved",),
+        )
+        self.assertEqual(
+            plan.uncertainties,
+            ("Retrieval accuracy is unknown",),
+        )
+
+    def test_metadata_immutable(self):
+        plan = create_plan(
+            "Inspect memory",
+            ["Review retrieval"],
+            assumptions=["Existing records are preserved"],
+        )
+
+        with self.assertRaises(FrozenInstanceError):
+            plan.assumptions = ("Changed assumption",)
+
+
 if __name__ == "__main__":
     unittest.main()
