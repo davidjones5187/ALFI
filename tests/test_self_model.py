@@ -37,5 +37,75 @@ class SelfModelTests(unittest.TestCase):
         self.assertIn("conversation", fresh["capabilities"])
 
 
+    def test_cli_status_disabled_inference(self):
+        import io
+        import tempfile
+        from contextlib import redirect_stdout
+        from pathlib import Path
+        from unittest.mock import patch
+
+        import first_ai
+
+        with tempfile.TemporaryDirectory() as folder:
+            memory_file = Path(folder) / "memory.json"
+            ai = first_ai.ALFI(
+                memory_file=memory_file,
+                use_ollama=False,
+                ollama_model="test-model:1b",
+            )
+            output = io.StringIO()
+
+            with (
+                patch.object(first_ai, "ALFI", return_value=ai),
+                patch("builtins.input", side_effect=["/status", "/quit"]),
+                redirect_stdout(output),
+            ):
+                first_ai.main()
+
+            result = output.getvalue()
+            self.assertIn("Identity: A.L.F.I.", result)
+            self.assertIn("Configured model: disabled", result)
+            self.assertIn("Inference: disabled", result)
+            self.assertIn("Planning: not implemented", result)
+            self.assertIn("Initiative: not implemented", result)
+            self.assertIn("Tool execution: supervised", result)
+
+            self.assertFalse(memory_file.exists())
+            self.assertFalse((Path(folder) / "conversation_history.json").exists())
+            self.assertFalse((Path(folder) / "structured_memory.json").exists())
+
+    def test_cli_status_model_override_without_network(self):
+        import io
+        import tempfile
+        from contextlib import redirect_stdout
+        from pathlib import Path
+        from unittest.mock import patch
+
+        import first_ai
+
+        with tempfile.TemporaryDirectory() as folder:
+            ai = first_ai.ALFI(
+                memory_file=Path(folder) / "memory.json",
+                use_ollama=True,
+                ollama_model="test-model:1b",
+            )
+            output = io.StringIO()
+
+            with (
+                patch.object(first_ai, "ALFI", return_value=ai),
+                patch("builtins.input", side_effect=["/status", "/quit"]),
+                patch("first_ai.urllib.request.urlopen") as network,
+                redirect_stdout(output),
+            ):
+                first_ai.main()
+
+            result = output.getvalue()
+            self.assertIn("Configured model: test-model:1b", result)
+            self.assertIn("Inference: ollama", result)
+            self.assertIn("Planning: not implemented", result)
+            self.assertIn("Initiative: not implemented", result)
+            network.assert_not_called()
+
+
 if __name__ == "__main__":
     unittest.main()

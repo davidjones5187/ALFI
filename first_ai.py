@@ -10,6 +10,7 @@ import urllib.request
 from collections import Counter
 from pathlib import Path
 from memory_intelligence import MemoryStore
+from self_model import operational_snapshot
 from conversational_intelligence import resolve_followup, response_guidance, natural_acknowledgment, clarification_needed, conversation_guidance, feedback_response, quality_guidance, adaptive_guidance, adaptive_clarification, precision_guidance, length_guidance, increment7_guidance, contextual_subject, response_policy, response_needs_revision, format_violation, factual_revision_guidance, select_stage4_history, select_stage5_r2_history
 
 MEMORY_FILE = Path(__file__).with_name("ai_memory.json")
@@ -887,7 +888,7 @@ def guided_inspection():
 def main():
     ai = ALFI()
     print("A.L.F.I. 1.6-dev | Conversational Intelligence")
-    print("Commands: /inspect, /teach, /knowledge, /forget, /history, /clearhistory, /remember, /memories, /recall, /correct, /forgetmemory, /help, /quit")
+    print("Commands: /inspect, /teach, /knowledge, /forget, /history, /clearhistory, /remember, /memories, /recall, /correct, /forgetmemory, /status, /help, /quit")
     while True:
         try:
             message = input("You: ").strip()
@@ -902,6 +903,20 @@ def main():
             break
         if command == "/cancel":
             print("No teaching session is active. Use /teach to start one.")
+        elif command == "/status":
+            snapshot = operational_snapshot(ai.ollama_model, ai.use_ollama)
+            print("A.L.F.I. Operational Status")
+            print("Identity:", snapshot["identity"]["name"])
+            print("Version:", snapshot["identity"]["version"])
+            print("Configured model:", snapshot["runtime"]["model"] or "disabled")
+            print("Inference:", snapshot["runtime"]["inference"])
+            print("Declared capabilities:", ", ".join(snapshot["capabilities"]))
+            for capability in ("planning", "initiative"):
+                state = snapshot["autonomy"][capability]
+                status = "enabled" if state["available"] and state["enabled"] else "not implemented"
+                print(f"{capability.title()}: {status} (target: {state['target']})")
+            print("Tool execution:", snapshot["autonomy"]["tool_execution"])
+
         elif command == "/remember":
             kind = input("Type (fact/preference/instruction): ").strip().lower()
             key = input("Memory key: ").strip()
@@ -955,7 +970,7 @@ def main():
                 print(f"A.L.F.I.: Inspection failed: {exc}")
 
         elif command == "/help":
-            print("/inspect text file | /teach lesson | /knowledge topics | /forget topic | /history chats | /clearhistory erase chats | /remember save | /memories list | /recall search | /correct revise | /forgetmemory delete | /quit exit")
+            print("/status operational configuration | /inspect text file | /teach lesson | /knowledge topics | /forget topic | /history chats | /clearhistory erase chats | /remember save | /memories list | /recall search | /correct revise | /forgetmemory delete | /quit exit")
         elif command == "/forget":
             topic = input("Topic to forget: ").strip()
             if topic and input(f"Delete taught topic {topic!r}? [y/N]: ").strip().lower() in ("y", "yes"):
