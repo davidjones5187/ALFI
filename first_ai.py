@@ -284,8 +284,9 @@ class ALFI:
             "You are A.L.F.I. (Artificial Lifeform — First Iteration), "
             "a helpful local AI assistant. Be concise, accurate, and acknowledge uncertainty. "
             "You are a language model, not a conscious lifeform. "
-            "Your model weights do not change during chat. Conversation history is temporary context, "
-            "and only /teach or /remember saves explicitly provided facts or lessons. Never invent past interactions or "
+            "Your model weights do not change during chat. You can retain conversation history in local storage "
+            "and retrieve explicitly saved memories. Only selected relevant history is included in each model request. "
+            "Commands such as /teach and /remember save explicitly provided information; ordinary conversation does not retrain your model. Never invent past interactions or "
             "claim to have learned or updated knowledge from ordinary conversation. "
             "A filename or file path does not mean you have accessed the file. "
             "Never claim to have opened, read, inspected, or verified a local file "
@@ -417,6 +418,25 @@ class ALFI:
             return social
         if self.is_memory_question(message):
             return self.memory_explanation()
+
+        if message.strip().lower().rstrip("?.! ") in {
+            "what have you actually learned about me",
+            "what do you remember about me",
+            "what do you know about me",
+        }:
+            items = self.structured_memory.list_items()
+            if not items:
+                return "I have no explicitly saved structured memories about you."
+            details = "; ".join(
+                f"{item['key']}: {item['value']} (source: {item['source']})"
+                for item in items
+            )
+            return (
+                "Here is the information in my saved structured memory: "
+                + details
+                + ". These are stored records, not independently verified facts "
+                "or evidence that my model weights have changed."
+            )
         historical = self.history_question_answer(message)
         if historical is not None:
             return historical
