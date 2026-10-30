@@ -1,4 +1,5 @@
 """A.L.F.I. — Artificial Lifeform, First Iteration."""
+from action_proposals import generate_model_action_proposal
 import json
 import math
 import os
@@ -888,7 +889,7 @@ def guided_inspection():
 def main():
     ai = ALFI()
     print("A.L.F.I. 1.6-dev | Conversational Intelligence")
-    print("Commands: /inspect, /teach, /knowledge, /forget, /history, /clearhistory, /remember, /memories, /recall, /correct, /forgetmemory, /status, /help, /quit")
+    print("Commands: /propose, /inspect, /teach, /knowledge, /forget, /history, /clearhistory, /remember, /memories, /recall, /correct, /forgetmemory, /status, /help, /quit")
     while True:
         try:
             message = input("You: ").strip()
@@ -903,6 +904,31 @@ def main():
             break
         if command == "/cancel":
             print("No teaching session is active. Use /teach to start one.")
+        elif command == "/propose" or command.startswith("/propose "):
+            objective = message[len("/propose"):].strip()
+            if not objective:
+                print("Usage: /propose <objective>")
+            elif not ai.use_ollama:
+                print("A.L.F.I.: Proposal generation requires Ollama.")
+            else:
+                try:
+                    proposal = generate_model_action_proposal(
+                        objective,
+                        model=ai.ollama_model,
+                        url=ai.ollama_url,
+                    )
+                except (ValueError, OSError, TimeoutError) as exc:
+                    print("A.L.F.I.: Could not generate a valid proposal:", exc)
+                else:
+                    print("A.L.F.I. Action Proposal")
+                    print("Action:", proposal.action)
+                    print("Justification:", proposal.justification)
+                    print("Risks:")
+                    for risk in proposal.risks:
+                        print(" -", risk)
+                    print("Authorization: Required")
+                    print("Status:", proposal.status)
+                    print("No action performed.")
         elif command == "/status":
             snapshot = operational_snapshot(ai.ollama_model, ai.use_ollama)
             print("A.L.F.I. Operational Status")
@@ -970,7 +996,7 @@ def main():
                 print(f"A.L.F.I.: Inspection failed: {exc}")
 
         elif command == "/help":
-            print("/status operational configuration | /inspect text file | /teach lesson | /knowledge topics | /forget topic | /history chats | /clearhistory erase chats | /remember save | /memories list | /recall search | /correct revise | /forgetmemory delete | /quit exit")
+            print("/propose action recommendation | /status operational configuration | /inspect text file | /teach lesson | /knowledge topics | /forget topic | /history chats | /clearhistory erase chats | /remember save | /memories list | /recall search | /correct revise | /forgetmemory delete | /quit exit")
         elif command == "/forget":
             topic = input("Topic to forget: ").strip()
             if topic and input(f"Delete taught topic {topic!r}? [y/N]: ").strip().lower() in ("y", "yes"):
