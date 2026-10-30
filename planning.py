@@ -117,7 +117,11 @@ def generate_model_plan(
         "uncertainties (a list of strings). "
         "Do not include approval, execution, status, or objective fields. "
         "Propose actions only. Never claim that actions were performed. "
-        "Do not assume access to files, memory, tools, or external systems."
+        "Do not assume access to files, memory, tools, or external systems. "
+        "Preserve the exact objective; do not substitute a different or approximate outcome. "
+        "Order steps so every prerequisite is satisfied before its dependent step. "
+        "Distinguish measured evidence from estimates, proxies, and qualitative judgments. "
+        "If evidence or tools are unavailable, propose how an authorized person could obtain them; never invent or simulate measurements."
     )
 
     payload = json.dumps({
