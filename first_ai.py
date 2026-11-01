@@ -1,5 +1,6 @@
 """A.L.F.I. — Artificial Lifeform, First Iteration."""
 from action_proposals import generate_model_action_proposal
+from verified_context import create_verified_context
 import json
 import math
 import os
@@ -889,7 +890,7 @@ def guided_inspection():
 def main():
     ai = ALFI()
     print("A.L.F.I. 1.6-dev | Conversational Intelligence")
-    print("Commands: /propose, /inspect, /teach, /knowledge, /forget, /history, /clearhistory, /remember, /memories, /recall, /correct, /forgetmemory, /status, /help, /quit")
+    print("Commands: /propose, /propose-context, /inspect, /teach, /knowledge, /forget, /history, /clearhistory, /remember, /memories, /recall, /correct, /forgetmemory, /status, /help, /quit")
     while True:
         try:
             message = input("You: ").strip()
@@ -904,18 +905,36 @@ def main():
             break
         if command == "/cancel":
             print("No teaching session is active. Use /teach to start one.")
-        elif command == "/propose" or command.startswith("/propose "):
-            objective = message[len("/propose"):].strip()
+        elif (
+            command == "/propose"
+            or command.startswith("/propose ")
+            or command == "/propose-context"
+            or command.startswith("/propose-context ")
+        ):
+            with_context = (
+                command == "/propose-context"
+                or command.startswith("/propose-context ")
+            )
+            prefix = "/propose-context" if with_context else "/propose"
+            objective = message[len(prefix):].strip()
             if not objective:
-                print("Usage: /propose <objective>")
+                print(f"Usage: {prefix} <objective>")
             elif not ai.use_ollama:
                 print("A.L.F.I.: Proposal generation requires Ollama.")
             else:
                 try:
+                    context = None
+                    if with_context:
+                        statement = input("Context fact: ").strip()
+                        fact_source = input("Declared source: ").strip()
+                        context = create_verified_context([
+                            {"statement": statement, "source": fact_source}
+                        ])
                     proposal = generate_model_action_proposal(
                         objective,
                         model=ai.ollama_model,
                         url=ai.ollama_url,
+                        context=context,
                     )
                 except (ValueError, OSError, TimeoutError) as exc:
                     print("A.L.F.I.: Could not generate a valid proposal:", exc)
@@ -996,7 +1015,7 @@ def main():
                 print(f"A.L.F.I.: Inspection failed: {exc}")
 
         elif command == "/help":
-            print("/propose action recommendation | /status operational configuration | /inspect text file | /teach lesson | /knowledge topics | /forget topic | /history chats | /clearhistory erase chats | /remember save | /memories list | /recall search | /correct revise | /forgetmemory delete | /quit exit")
+            print("/propose action recommendation | /propose-context recommendation with supplied context | /status operational configuration | /inspect text file | /teach lesson | /knowledge topics | /forget topic | /history chats | /clearhistory erase chats | /remember save | /memories list | /recall search | /correct revise | /forgetmemory delete | /quit exit")
         elif command == "/forget":
             topic = input("Topic to forget: ").strip()
             if topic and input(f"Delete taught topic {topic!r}? [y/N]: ").strip().lower() in ("y", "yes"):
