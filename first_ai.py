@@ -1,5 +1,6 @@
 """A.L.F.I. — Artificial Lifeform, First Iteration."""
 from action_proposals import generate_model_action_proposal
+from context_assessment import assess_context
 from verified_context import create_verified_context
 import json
 import math
@@ -890,7 +891,7 @@ def guided_inspection():
 def main():
     ai = ALFI()
     print("A.L.F.I. 1.6-dev | Conversational Intelligence")
-    print("Commands: /propose, /propose-context, /inspect, /teach, /knowledge, /forget, /history, /clearhistory, /remember, /memories, /recall, /correct, /forgetmemory, /status, /help, /quit")
+    print("Commands: /assess, /propose, /propose-context, /inspect, /teach, /knowledge, /forget, /history, /clearhistory, /remember, /memories, /recall, /correct, /forgetmemory, /status, /help, /quit")
     while True:
         try:
             message = input("You: ").strip()
@@ -905,6 +906,48 @@ def main():
             break
         if command == "/cancel":
             print("No teaching session is active. Use /teach to start one.")
+        elif command == "/assess":
+            print("A.L.F.I. Context Assessment")
+            required = input("Required field: ").strip()
+            items = []
+
+            print("Enter field/value/source entries.")
+            print("Leave the field blank to finish.")
+
+            while True:
+                field = input("Field: ").strip()
+                if not field:
+                    break
+
+                value = input("Value: ").strip()
+                declared_source = input("Declared source: ").strip()
+
+                items.append({
+                    "field": field,
+                    "value": value,
+                    "source": declared_source,
+                })
+
+            try:
+                assessment = assess_context([required], items)
+            except ValueError as exc:
+                print("A.L.F.I.: Assessment failed:", exc)
+            else:
+                print("Assessment status:", assessment.status)
+
+                for missing in assessment.missing:
+                    print("Missing:", missing)
+
+                for conflict in assessment.conflicts:
+                    print("Conflict:", conflict.field)
+                    for entry in conflict.entries:
+                        print(
+                            " -", entry.value,
+                            "| declared source:", entry.source
+                        )
+
+                print("Caller-supplied information only.")
+                print("No action performed.")
         elif (
             command == "/propose"
             or command.startswith("/propose ")
@@ -1015,7 +1058,7 @@ def main():
                 print(f"A.L.F.I.: Inspection failed: {exc}")
 
         elif command == "/help":
-            print("/propose action recommendation | /propose-context recommendation with supplied context | /status operational configuration | /inspect text file | /teach lesson | /knowledge topics | /forget topic | /history chats | /clearhistory erase chats | /remember save | /memories list | /recall search | /correct revise | /forgetmemory delete | /quit exit")
+            print("/assess structured information | /propose action recommendation | /propose-context recommendation with supplied context | /status operational configuration | /inspect text file | /teach lesson | /knowledge topics | /forget topic | /history chats | /clearhistory erase chats | /remember save | /memories list | /recall search | /correct revise | /forgetmemory delete | /quit exit")
         elif command == "/forget":
             topic = input("Topic to forget: ").strip()
             if topic and input(f"Delete taught topic {topic!r}? [y/N]: ").strip().lower() in ("y", "yes"):
