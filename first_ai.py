@@ -1,5 +1,6 @@
 """A.L.F.I. — Artificial Lifeform, First Iteration."""
 from action_proposals import generate_model_action_proposal
+from consequential_action_classification import classify_consequential_action
 from uncertainty_response import recommend_uncertainty_response
 from context_assessment import assess_context
 from verified_context import create_verified_context
@@ -334,9 +335,25 @@ class ALFI:
                                          ". Give a concrete external example, not an account of your own learning."})
                         break
         messages.append({"role": "system", "content": response_policy(message, context_history)})
-        uncertainty = recommend_uncertainty_response(message, "ordinary")
+        action_classification = classify_consequential_action(message)
+        uncertainty = recommend_uncertainty_response(
+            message, action_classification.situation
+        )
         if uncertainty.uncertainty_detected:
             messages.append({"role": "system", "content": uncertainty.guidance})
+        if action_classification.category == "action_request":
+            messages.append({"role": "system", "content": (
+                "This message contains a recognized consequential-action request. "
+                "Do not execute or claim to have executed the action. "
+                "Explain that human approval is required before execution. "
+                "Offer a supervised proposal through /propose."
+            )})
+        elif action_classification.category == "action_discussion":
+            messages.append({"role": "system", "content": (
+                "This message discusses a consequential action. "
+                "Discuss considerations without treating the question "
+                "as authorization to execute anything."
+            )})
         resolved = resolve_followup(message, context_history)
         if not resolved:
             subject = contextual_subject(message, context_history)
