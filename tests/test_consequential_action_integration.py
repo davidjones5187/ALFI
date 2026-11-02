@@ -93,10 +93,25 @@ class TestConsequentialActionIntegration(unittest.TestCase):
             if item["role"] == "system"
         ))
 
-    def test_unknown_message_not_authorized(self):
+    def test_financial_transfer_requires_supervision(self):
         system = self.system_messages("Transfer the money.")
-        self.assertFalse(any(
+        self.assertTrue(any(
             "human approval is required" in content
+            for content in system
+        ))
+        self.assertTrue(any(
+            "Do not request account numbers" in content
+            for content in system
+        ))
+        self.assertTrue(any(
+            "Do not imply that financial transfers are supported" in content
+            for content in system
+        ))
+
+    def test_unknown_message_not_authorized(self):
+        system = self.system_messages("Move the funds.")
+        self.assertFalse(any(
+            "recognized consequential-action request" in content
             for content in system
         ))
 

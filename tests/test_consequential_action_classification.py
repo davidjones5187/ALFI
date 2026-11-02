@@ -41,9 +41,28 @@ class ConsequentialActionClassificationTests(unittest.TestCase):
         )
         self.assertEqual(result.category, "unknown")
 
+    def test_financial_transfer_requires_approval(self):
+        for message in (
+            "Transfer the money.",
+            "Please transfer $100.",
+            "I think this payment is due. Transfer the money.",
+            "Pay the invoice.",
+        ):
+            with self.subTest(message=message):
+                result = classify_consequential_action(message)
+                self.assertEqual(result.category, "action_request")
+                self.assertTrue(result.requires_approval)
+
+    def test_financial_discussion_not_authorization(self):
+        result = classify_consequential_action(
+            "Should I transfer the money?"
+        )
+        self.assertEqual(result.category, "action_discussion")
+        self.assertFalse(result.requires_approval)
+
     def test_unsupported_request(self):
         result = classify_consequential_action(
-            "Transfer the money."
+            "Move the funds."
         )
         self.assertEqual(result.category, "unknown")
 

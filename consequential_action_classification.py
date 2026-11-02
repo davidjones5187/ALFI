@@ -6,7 +6,7 @@ import re
 
 _ACTION = (
     r"(?:delete|remove|erase|overwrite|replace|send|email|"
-    r"publish|post)"
+    r"publish|post|transfer|pay)"
 )
 
 _REQUEST = re.compile(

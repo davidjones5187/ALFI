@@ -346,7 +346,10 @@ class ALFI:
                 "This message contains a recognized consequential-action request. "
                 "Do not execute or claim to have executed the action. "
                 "Explain that human approval is required before execution. "
-                "Offer a supervised proposal through /propose."
+                "Offer a supervised proposal through /propose. "
+                "Do not request account numbers, routing numbers, passwords, "
+                "or other sensitive financial credentials. "
+                "Do not imply that financial transfers are supported."
             )})
         elif action_classification.category == "action_discussion":
             messages.append({"role": "system", "content": (
