@@ -1,5 +1,6 @@
 """A.L.F.I. — Artificial Lifeform, First Iteration."""
 from action_proposals import generate_model_action_proposal
+from uncertainty_response import recommend_uncertainty_response
 from context_assessment import assess_context
 from verified_context import create_verified_context
 import json
@@ -333,6 +334,9 @@ class ALFI:
                                          ". Give a concrete external example, not an account of your own learning."})
                         break
         messages.append({"role": "system", "content": response_policy(message, context_history)})
+        uncertainty = recommend_uncertainty_response(message, "ordinary")
+        if uncertainty.uncertainty_detected:
+            messages.append({"role": "system", "content": uncertainty.guidance})
         resolved = resolve_followup(message, context_history)
         if not resolved:
             subject = contextual_subject(message, context_history)
