@@ -914,6 +914,49 @@ def guided_inspection():
 
 def main():
     ai = ALFI()
+
+    import json
+    import subprocess
+    from pathlib import Path
+
+    visual_status = Path(__file__).resolve().parent / ".alfi_visual_status.json"
+    visual_process = None
+
+    def visual_state(state):
+        if visual_process is None or visual_process.poll() is not None:
+            return
+        try:
+            visual_status.write_text(json.dumps({"state": state}))
+        except OSError:
+            pass
+
+    try:
+        visual_process = subprocess.Popen(
+            [sys.executable, str(Path(__file__).resolve().parent / "alfi_visual.py")],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        visual_state("idle")
+    except OSError:
+        visual_process = None
+
+    import atexit
+
+    def close_visual():
+        if visual_process is not None and visual_process.poll() is None:
+            visual_process.terminate()
+            try:
+                visual_process.wait(timeout=3)
+            except subprocess.TimeoutExpired:
+                visual_process.kill()
+                visual_process.wait()
+
+        try:
+            visual_status.unlink(missing_ok=True)
+        except OSError:
+            pass
+
+    atexit.register(close_visual)
     print("A.L.F.I. 1.6-dev | Conversational Intelligence")
     print("Commands: /assess, /propose, /propose-context, /inspect, /teach, /knowledge, /forget, /history, /clearhistory, /remember, /memories, /recall, /correct, /forgetmemory, /status, /help, /quit")
     while True:
@@ -1113,9 +1156,15 @@ def main():
             guided_inspection()
 
         else:
-            answer = ai.respond(message)
-            print("A.L.F.I.:", answer)
-            ai.record(message, answer)
+            visual_state("processing")
+            try:
+                answer = ai.respond(message)
+                visual_state("responding")
+                print("A.L.F.I.:", answer)
+                ai.record(message, answer)
+            except BaseException:
+                visual_state("idle")
+                raise
 
 if __name__ == "__main__":
     main()
