@@ -1,4 +1,5 @@
 """A.L.F.I. — Artificial Lifeform, First Iteration."""
+from alfi_principles import GOVERNING_GUIDANCE
 from action_proposals import generate_model_action_proposal
 from consequential_action_classification import classify_consequential_action
 from uncertainty_response import recommend_uncertainty_response
@@ -358,6 +359,7 @@ class ALFI:
                                          "The current subject is: " + prior +
                                          ". Give a concrete external example, not an account of your own learning."})
                         break
+        messages.append({"role": "system", "content": GOVERNING_GUIDANCE})
         messages.append({"role": "system", "content": response_policy(message, context_history)})
         action_classification = classify_consequential_action(message)
         uncertainty = recommend_uncertainty_response(

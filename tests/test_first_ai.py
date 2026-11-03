@@ -92,7 +92,7 @@ class TestALFI(unittest.TestCase):
                  patch("first_ai.urllib.request.urlopen", side_effect=fake_request), \
                  patch("first_ai.sys.stderr", new_callable=io.StringIO) as stderr:
                 ai.generate("An unrelated question?")
-            self.assertEqual([item["role"] for item in payloads[0]["messages"]], ["system", "system", "user"])
+            self.assertEqual([item["role"] for item in payloads[0]["messages"]], ["system", "system", "system", "user"])
             self.assertEqual(ai.history, [{"user": "private question", "assistant": "private response"}])
             self.assertIn("prompt_history_mode: excluded", stderr.getvalue())
             self.assertIn("prompt_history_pairs: 0", stderr.getvalue())
