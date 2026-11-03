@@ -313,11 +313,27 @@ class ALFI:
         )}]
         # Use stronger key relevance for automatic conversational memory.
         # Explicit /recall continues using MemoryStore.search unchanged.
-        query_terms = set(tokenize(message)) - STOPWORDS
-        candidates = self.structured_memory.search(message, limit=5)
+        # Normalize narrowly equivalent response-format terminology.
+        # Keep the existing relevance threshold and retrieval limit.
+        memory_aliases = {
+            "replies": "response",
+            "reply": "response",
+            "responses": "response",
+            "formatting": "format",
+        }
+        query_terms = {
+            memory_aliases.get(term, term)
+            for term in set(tokenize(message)) - STOPWORDS
+        }
+        candidates = self.structured_memory.search(
+            " ".join(sorted(query_terms)), limit=5
+        )
         relevant = []
         for item in candidates:
-            key_terms = set(tokenize(item["key"])) - STOPWORDS
+            key_terms = {
+                memory_aliases.get(term, term)
+                for term in set(tokenize(item["key"])) - STOPWORDS
+            }
             overlap = len(query_terms & key_terms)
             required = min(2, len(key_terms))
             if required and overlap >= required:
