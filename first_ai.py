@@ -1,5 +1,6 @@
 """A.L.F.I. — Artificial Lifeform, First Iteration."""
 from alfi_principles import GOVERNING_GUIDANCE
+from autonomy_boundaries import assess_autonomy, INDEPENDENT
 from action_proposals import generate_model_action_proposal
 from consequential_action_classification import classify_consequential_action
 from uncertainty_response import recommend_uncertainty_response
@@ -1066,6 +1067,8 @@ def main():
                         context = create_verified_context([
                             {"statement": statement, "source": fact_source}
                         ])
+                    if assess_autonomy("generate_proposal").decision != INDEPENDENT:
+                        raise ValueError("Proposal generation blocked by autonomy policy.")
                     proposal = generate_model_action_proposal(
                         objective,
                         model=ai.ollama_model,
