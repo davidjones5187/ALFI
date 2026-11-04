@@ -1,6 +1,6 @@
 """A.L.F.I. — Artificial Lifeform, First Iteration."""
 from alfi_principles import GOVERNING_GUIDANCE
-from autonomy_boundaries import assess_autonomy, INDEPENDENT
+from autonomy_boundaries import assess_autonomy, INDEPENDENT, REQUIRES_AUTHORIZATION
 from action_proposals import generate_model_action_proposal
 from consequential_action_classification import classify_consequential_action
 from uncertainty_response import recommend_uncertainty_response
@@ -939,6 +939,13 @@ def guided_inspection():
     except (ValueError, OSError) as exc:
         print(f"A.L.F.I.: Inspection failed: {exc}")
 
+
+def memory_policy_allows(authorized=False):
+    """Require both policy permission and prior user confirmation."""
+    decision = assess_autonomy("modify_memory").decision
+    return decision == REQUIRES_AUTHORIZATION and authorized
+
+
 def main():
     ai = ALFI()
 
@@ -1107,6 +1114,8 @@ def main():
             value = input("Memory value: ").strip()
             if input("Save this memory? [y/N]: ").strip().lower() in ("y", "yes"):
                 try:
+                    if not memory_policy_allows(authorized=True):
+                        raise ValueError("Memory modification blocked by autonomy policy.")
                     ai.structured_memory.put(kind, key, value)
                     print("Memory saved.")
                 except (ValueError, OSError) as exc:
@@ -1131,6 +1140,8 @@ def main():
                     print("After: ", value)
                 if value and input("Replace the entire old value with this new value? [y/N]: ").strip().lower() in ("y", "yes"):
                     try:
+                        if not memory_policy_allows(authorized=True):
+                            raise ValueError("Memory modification blocked by autonomy policy.")
                         ai.structured_memory.put(old["kind"], key, value, "explicit /correct")
                         print("Memory corrected.")
                     except (ValueError, OSError) as exc:
@@ -1139,6 +1150,8 @@ def main():
             key = input("Memory key to delete: ").strip()
             if key and input("Delete this memory? [y/N]: ").strip().lower() in ("y", "yes"):
                 try:
+                    if not memory_policy_allows(authorized=True):
+                        raise OSError("Memory modification blocked by autonomy policy.")
                     print("Memory removed." if ai.structured_memory.forget(key) else "Memory not found.")
                 except OSError as exc:
                     print("Deletion failed:", exc)
