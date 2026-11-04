@@ -1141,6 +1141,10 @@ def main():
                     print("Deletion failed:", exc)
         elif command == "/inspect":
             filename = input("Text file path: ").strip()
+            approval = input("Inspect this file? [y/N]: ").strip().lower()
+            if approval not in ("y", "yes"):
+                print("A.L.F.I.: Inspection canceled.")
+                continue
             try:
                 result = inspect_text_file(filename)
                 print(
