@@ -773,6 +773,8 @@ def guided_document_qa(ai):
         if path.stat().st_size > 32768:
             raise ValueError("File exceeds the input-size limit.")
 
+        if not file_access_policy_allows(authorized=True):
+            raise ValueError("File access blocked by autonomy policy.")
         content = path.read_text(encoding="utf-8")
 
         if not content.strip():
@@ -869,6 +871,8 @@ def guided_summarization(ai):
         if path.stat().st_size > 32768:
             raise ValueError("File exceeds the input-size limit.")
 
+        if not file_access_policy_allows(authorized=True):
+            raise ValueError("File access blocked by autonomy policy.")
         content = path.read_text(encoding="utf-8")
         if not content.strip():
             raise ValueError("File is empty.")
@@ -931,6 +935,8 @@ def guided_inspection():
         return
 
     try:
+        if not file_access_policy_allows(authorized=True):
+            raise ValueError("File access blocked by autonomy policy.")
         result = inspect_text_file(filename)
         print(
             f"A.L.F.I.: Inspection complete: "
@@ -938,6 +944,12 @@ def guided_inspection():
         )
     except (ValueError, OSError) as exc:
         print(f"A.L.F.I.: Inspection failed: {exc}")
+
+
+def file_access_policy_allows(authorized=False):
+    """Require confirmation and the expected file-access policy."""
+    decision = assess_autonomy("read_new_local_file").decision
+    return decision == REQUIRES_AUTHORIZATION and authorized
 
 
 def memory_policy_allows(authorized=False):
