@@ -355,6 +355,10 @@ def response_policy(message, history):
         "If available information is insufficient, acknowledge uncertainty rather than inventing an answer.",
         "Never invent project history, file contents, test results, or completed actions.",
         "When evidence is missing, briefly identify what information would establish the answer.",
+        "Treat user-provided facts as premises, not independent verification.",
+        "Before recommending a solution, check it against the user's stated physical, numerical, and environmental constraints.",
+        "Explain the decisive constraint supporting your conclusion, not merely a related fact.",
+        "Distinguish established facts, inferences, and assumptions; do not invent missing specifications.",
     ]
     if FORMAT_DIGITS.search(message):
         parts.append("STRICT FORMAT: output numeric digits only; no words or punctuation.")
