@@ -3,6 +3,9 @@ import re
 
 FOLLOWUP = re.compile(
     r"^(?:(?:can you )?give me a real-world example|what are its limitations|give (?:me )?(?:an? |another |a simple |a real-world )?example(?: of (?:that|it))?|"
+    r"how (?:big|large|small|old|far|fast|heavy) is it|"
+    r"compare it with [^\n?.!]+|"
+    r"what about its [a-z][a-z -]*|"
     r"(?:can you )?explain (?:that|it)(?: again)?|"
     r"(?:tell me )?more(?: about (?:that|it))?|"
     r"what (?:about|does) (?:that|it)(?: mean)?|"
