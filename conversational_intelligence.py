@@ -484,4 +484,122 @@ def select_stage5_r2_history(message, history):
                     and re.search(r"\b" + re.escape(topic) + r"\b", prior, re.I)):
                 return [{"user": prior, "assistant": ""}], "explicit_correction"
         return [], "explicit_correction_missing"
+    # Explicit clarification: retrieve only the named subject's
+    # earlier user-provided statement, not unrelated conversation.
+    clarification = re.match(
+        r"^(?:i mean|i meant|no,? i mean)\s+(?:the\s+)?"
+        r"([a-z][a-z -]*?)\s+device\b",
+        question, re.I,
+    )
+    if clarification:
+        subject = clarification.group(1).strip()
+        subject_pattern = (
+            r"\b" + re.escape(subject) + r"\s+device\b"
+        )
+        for turn in reversed(history[-5:]):
+            if not isinstance(turn, dict):
+                continue
+            prior = turn.get("user", "")
+            if isinstance(prior, str) and re.search(
+                subject_pattern, prior, re.I
+            ):
+                return [
+                    {"user": prior, "assistant": ""}
+                ], "clarified_subject"
+        return [], "clarified_subject_missing"
+
+    # A question about an earlier answer requires the conversation itself.
+    if re.fullmatch(
+        r"(?:why did your answer change|why did you change your answer)"
+        r"[?.! ]*",
+        question, re.I,
+    ):
+        selected = [
+            dict(turn) for turn in history[-5:]
+            if isinstance(turn, dict)
+            and isinstance(turn.get("user"), str)
+            and isinstance(turn.get("assistant"), str)
+        ]
+        return selected, "answer_change" if selected else "answer_change_missing"
+
+    # A recent explicit correction is relevant when the question names
+    # the same subject. Do not expose unrelated conversation history.
+    for turn in reversed(history[-5:]):
+        if not isinstance(turn, dict):
+            continue
+        prior = turn.get("user", "")
+        if not isinstance(prior, str) or not re.match(
+            r"^correction\s*:", prior.strip(), re.I
+        ):
+            continue
+
+        match = re.search(
+            r"\b(?:fictional\s+)?([a-z][a-z -]*?)\s+device\b",
+            prior, re.I,
+        )
+        if match:
+            subject = match.group(1).strip()
+            if re.search(
+                r"\b" + re.escape(subject) + r"\s+device\b",
+                question, re.I,
+            ):
+                return [{"user": prior, "assistant": ""}], "recent_correction"
+
+    # Bounded progression for a recent user-defined task.
+    # Use user statements as evidence; never promote them to saved memory.
+    problem = re.fullmatch(
+        r"what problem does ([a-z][a-z0-9_-]*) face[?.! ]*",
+        question, re.I,
+    )
+    recommendation = re.fullmatch(
+        r"what would you recommend[?.! ]*",
+        question, re.I,
+    )
+
+    if problem:
+        subject = problem.group(1)
+        recent = [
+            turn["user"] for turn in history[-5:]
+            if isinstance(turn, dict)
+            and isinstance(turn.get("user"), str)
+        ]
+
+        subject_present = any(
+            re.search(r"\b" + re.escape(subject) + r"\b", prior, re.I)
+            for prior in recent
+        )
+        task_present = any(
+            re.search(r"\b(?:mission|task|plan|project)\b", prior, re.I)
+            for prior in recent
+        )
+
+        if subject_present and task_present:
+            return [
+                {"user": prior, "assistant": ""}
+                for prior in recent
+            ], "task_problem"
+
+        return [], "task_problem_missing"
+
+    if recommendation and history:
+        previous = history[-1]
+        prior_question = (
+            previous.get("user", "")
+            if isinstance(previous, dict) else ""
+        )
+
+        if re.fullmatch(
+            r"what problem does [a-z][a-z0-9_-]* face[?.! ]*",
+            prior_question, re.I,
+        ):
+            recent = [
+                turn["user"] for turn in history[-5:]
+                if isinstance(turn, dict)
+                and isinstance(turn.get("user"), str)
+            ]
+            return [
+                {"user": prior, "assistant": ""}
+                for prior in recent
+            ], "task_recommendation"
+
     return select_stage4_history(question, history[-5:])
