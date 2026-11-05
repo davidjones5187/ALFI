@@ -71,8 +71,8 @@ class TestALFI(unittest.TestCase):
                   patch("first_ai.sys.stderr", new_callable=io.StringIO) as stderr):
                 ai.generate("What is the total?")
             log = stderr.getvalue()
-            self.assertIn("prompt_roles: system,user,assistant,system,user", log)
-            self.assertIn("prompt_history_pairs: 1", log)
+            self.assertIn("prompt_roles: system,system,system,user", log)
+            self.assertIn("prompt_history_pairs: 0", log)
             self.assertIn("prompt_saved_memory_matches: 0", log)
             self.assertIn("prompt_generation_options: ollama_defaults", log)
             self.assertNotIn("private user text", log)
