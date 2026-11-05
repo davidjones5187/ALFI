@@ -289,10 +289,26 @@ class ALFI:
             history_mode = "r2_" + selection
         self.diagnostic("prompt_history_mode", history_mode)
         from datetime import datetime
-        current_local_date = datetime.now().astimezone().date().isoformat()
+        date_question = bool(re.search(
+            r"\b(today|tonight|tomorrow|yesterday|current date|"
+            r"current year|what(?:'s| is) the date|"
+            r"what(?:'s| is) the year|this year|right now)\b",
+            message,
+            re.IGNORECASE,
+        ))
+        current_local_date = (
+            datetime.now().astimezone().date().isoformat()
+            if date_question else None
+        )
+        date_context = (
+            (
+                f"Current local date (from the host computer): {current_local_date}. "
+                "Use this date for questions about today's date or current year. "
+            )
+            if date_question else ""
+        )
         messages = [{"role": "system", "content": (
-            f"Current local date (from the host computer): {current_local_date}. "
-            "Use this date for questions about today's date or current year. "
+            date_context +
             "Do not confuse the current date with your creation date, model training date, "
             "or project development history. "
             "Do not invent creation dates, release dates, training dates, or development milestones. "
