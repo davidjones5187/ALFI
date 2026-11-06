@@ -385,6 +385,29 @@ def response_policy(message, history):
     progression = followup_progression_guidance(message, history)
     if progression:
         parts.append(progression)
+
+    # v1.9.1: bounded conversational initiative for explicit advice.
+    advice_request = re.search(
+        r"\b(?:what (?:would|do) you recommend|"
+        r"what should i (?:do|focus on)|"
+        r"where (?:should|do) i (?:start|begin)|"
+        r"should i change my approach|"
+        r"i don['’]t know where to begin|"
+        r"i['’] don't know where to begin)\b",
+        message,
+        re.I,
+    )
+    if advice_request:
+        parts.append(
+            "When advice is requested, offer one practical next step "
+            "grounded in the available information. Briefly explain why. "
+            "If important context is missing, qualify the recommendation "
+            "rather than repeatedly asking for clarification. "
+            "Ask one focused question only when the missing information "
+            "would materially change the advice. "
+            "Never treat a recommendation as authorization to act."
+        )
+
     if (
         contextual_subject(message, history)
         or IMPORTANCE.fullmatch(message.strip())
@@ -563,6 +586,13 @@ def select_stage5_r2_history(message, history):
     normalized = question.lower().rstrip("?.! ")
     continuation_questions = {
         "what do you think i should focus on next",
+        "what would you recommend",
+        "what do you recommend",
+        "what should i do",
+        "where should i start",
+        "where do i begin",
+        "i don't know where to begin",
+        "i' don't know where to begin",
         "what should i focus on next",
     }
 
@@ -580,6 +610,9 @@ def select_stage5_r2_history(message, history):
             "effort",
             "goal",
             "priority",
+            "making progress",
+            "accomplish",
+            "trying to",
             "priorities",
         )
 
