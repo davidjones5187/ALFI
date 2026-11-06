@@ -405,6 +405,10 @@ def response_policy(message, history):
             "rather than repeatedly asking for clarification. "
             "Ask one focused question only when the missing information "
             "would materially change the advice. "
+            "If a useful recommendation can be given with the available "
+            "context, finish with that recommendation rather than an "
+            "additional clarification question. Ask a question only "
+            "when its answer is necessary to determine the next step. "
             "Never treat a recommendation as authorization to act."
         )
 
