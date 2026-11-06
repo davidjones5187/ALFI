@@ -385,7 +385,17 @@ def response_policy(message, history):
     progression = followup_progression_guidance(message, history)
     if progression:
         parts.append(progression)
-    parts.append(precision_guidance(message, history))
+    if (
+        contextual_subject(message, history)
+        or IMPORTANCE.fullmatch(message.strip())
+        or QUANTUM.search(message)
+        or re.search(
+            r"\b(?:neural networks?|training|backpropagation|"
+            r"optimization|optimizers?|machine learning)\b",
+            message, re.I,
+        )
+    ):
+        parts.append(precision_guidance(message, history))
     return " ".join(parts)
 
 
@@ -548,6 +558,36 @@ def select_stage5_r2_history(message, history):
                 question, re.I,
             ):
                 return [{"user": prior, "assistant": ""}], "recent_correction"
+
+    # v1.8.2: bounded conversational continuation.
+    normalized = question.lower().rstrip("?.! ")
+    continuation_questions = {
+        "what do you think i should focus on next",
+        "what should i focus on next",
+    }
+
+    if normalized in continuation_questions:
+        recent = [
+            dict(turn) for turn in history[-3:]
+            if isinstance(turn, dict)
+            and isinstance(turn.get("user"), str)
+            and isinstance(turn.get("assistant"), str)
+        ]
+
+        effort_signals = (
+            "working on",
+            "project",
+            "effort",
+            "goal",
+            "priority",
+            "priorities",
+        )
+
+        if recent and any(
+            any(signal in turn["user"].lower() for signal in effort_signals)
+            for turn in recent
+        ):
+            return recent, "effort_continuation"
 
     # Bounded progression for a recent user-defined task.
     # Use user statements as evidence; never promote them to saved memory.

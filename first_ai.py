@@ -307,6 +307,12 @@ class ALFI:
             )
             if date_question else ""
         )
+        if not date_question:
+            date_context = (
+                "Do not volunteer the current date or year when it is "
+                "irrelevant to the user's request. No verified current "
+                "date has been supplied for this response; do not guess one. "
+            )
         messages = [{"role": "system", "content": (
             date_context +
             "Do not confuse the current date with your creation date, model training date, "
