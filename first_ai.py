@@ -1,4 +1,5 @@
 """A.L.F.I. — Artificial Lifeform, First Iteration."""
+from alfi_library_workflow import guided_library_qa
 from alfi_principles import GOVERNING_GUIDANCE
 from autonomy_boundaries import assess_autonomy, INDEPENDENT, REQUIRES_AUTHORIZATION
 from action_proposals import generate_model_action_proposal
@@ -1070,7 +1071,7 @@ def main():
                 "/history", "/clearhistory", "/remember",
                 "/memories", "/recall", "/correct",
                 "/forgetmemory", "/status", "/help",
-                "/quit", "/cancel",
+                "/quit", "/cancel", "/library",
             }
             if candidate in known_commands:
                 command = candidate
@@ -1252,8 +1253,10 @@ def main():
             except (ValueError, OSError) as exc:
                 print(f"A.L.F.I.: Inspection failed: {exc}")
 
+        elif command == "/library":
+            guided_library_qa(ai, policy_allows=file_access_policy_allows)
         elif command == "/help":
-            print("/assess structured information | /propose action recommendation | /propose-context recommendation with supplied context | /status operational configuration | /inspect text file | /teach lesson | /knowledge topics | /forget topic | /history chats | /clearhistory erase chats | /remember save | /memories list | /recall search | /correct revise | /forgetmemory delete | /quit exit")
+            print("/library supervised document library | /assess structured information | /propose action recommendation | /propose-context recommendation with supplied context | /status operational configuration | /inspect text file | /teach lesson | /knowledge topics | /forget topic | /history chats | /clearhistory erase chats | /remember save | /memories list | /recall search | /correct revise | /forgetmemory delete | /quit exit")
         elif command == "/forget":
             topic = input("Topic to forget: ").strip()
             if topic and input(f"Delete taught topic {topic!r}? [y/N]: ").strip().lower() in ("y", "yes"):
