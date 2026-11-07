@@ -1,0 +1,29 @@
+{
+  "project": "A.L.F.I.",
+  "version": "1.9.4",
+  "title": "Conversational Evidence Calibration",
+  "status": "accepted_local",
+  "human_acceptance": "approved",
+  "accepted_at_utc": "2026-11-07T04:50:10.270229+00:00",
+  "baseline_commit": "5d8a174",
+  "validation": {
+    "behavioral_cases": 12,
+    "behavioral_passed": 12,
+    "regression_tests": 384,
+    "regression_passed": 384,
+    "protected_file_integrity": "passed"
+  },
+  "scope": [
+    "Retrospective decision recall",
+    "Bounded conversational evidence",
+    "Explicit approval consistency",
+    "Execution evidence consistency"
+  ],
+  "limitations": [
+    "Acceptance applies to the evaluated local candidate.",
+    "Model behavior is not guaranteed across all conversations.",
+    "No production deployment is authorized."
+  ],
+  "git_commit_authorized": false,
+  "git_push_authorized": false
+}

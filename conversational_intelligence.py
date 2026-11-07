@@ -360,6 +360,82 @@ def response_policy(message, history):
         "Explain the decisive constraint supporting your conclusion, not merely a related fact.",
         "Distinguish established facts, inferences, and assumptions; do not invent missing specifications.",
     ]
+    # v1.9.4: Evidence-based retrospective summaries.
+    retrospective_decision = re.fullmatch(
+        r"(?:what did we decide|"
+        r"what was (?:my|our) decision|"
+        r"summarize my decision)"
+        r"[?.! ]*",
+        message.strip(),
+        re.I,
+    )
+
+    if retrospective_decision:
+        parts.append(
+            "For retrospective decision questions, use only "
+            "the supplied conversation as evidence. "
+            "An exploratory question, possibility, suggestion, "
+            "or recommendation is not an agreement or decision. "
+            "An explicit user approval establishes only what "
+            "was approved, not that an action was executed. "
+            "Do not say 'we decided', 'we established', or "
+            "'you approved' unless the supplied conversation "
+            "directly supports that claim. "
+            "If the conversation contains only a proposal or "
+            "question, state that no decision was established. "
+            "If relevant evidence is missing, say so."
+        )
+
+    # v1.9.4 remediation 2: Context-specific evidence guidance.
+    bounded_context_request = re.fullmatch(
+        r"(?:what should it prioritize|"
+        r"summarize what we know|"
+        r"did i approve it)"
+        r"[?.! ]*",
+        message.strip(),
+        re.I,
+    )
+
+    if bounded_context_request:
+        parts.append(
+            "Use the immediately preceding user statement as "
+            "the relevant conversational evidence, if supplied. "
+            "Resolve references such as 'it' to that statement's "
+            "subject only when the subject is unambiguous. "
+            "Distinguish suspicions, questions, and proposals "
+            "from verified observations or established decisions. "
+            "A recommendation is not user approval. "
+            "Do not claim an action was approved or executed "
+            "without explicit supporting evidence. "
+            "If evidence is missing, state that limitation "
+            "rather than inventing details."
+        )
+
+    # v1.9.4 refinement 3: Explicit decision consistency.
+    if retrospective_decision:
+        parts.append(
+            "Decision consistency rule: If the supplied "
+            "conversation contains an explicit user approval "
+            "or decision, identify that decision accurately. "
+            "Do not subsequently claim that no decision was "
+            "established. Distinguish approval from execution: "
+            "approval alone does not prove an action occurred. "
+            "If the user approved only maintaining a baseline, "
+            "do not infer approval for additional changes."
+        )
+
+    # v1.9.4 refinement 3: Execution evidence consistency.
+    if bounded_context_request:
+        parts.append(
+            "Execution evidence rule: Do not claim an action "
+            "was executed or was not executed unless the "
+            "supplied evidence establishes that status. "
+            "A recommendation alone proves neither approval "
+            "nor execution. Missing approval evidence is not "
+            "proof of nonexecution. When execution status is "
+            "unknown, explicitly state that it is unknown."
+        )
+
     if FORMAT_DIGITS.search(message):
         parts.append("STRICT FORMAT: output numeric digits only; no words or punctuation.")
     if FORMAT_WORD.search(message):
@@ -504,6 +580,63 @@ def select_stage5_r2_history(message, history):
     question = message.strip()
     if not question or COMMAND.match(question):
         return [], "independent"
+    # v1.9.4: Explicit retrospective decision recall.
+    # Retrieve only the immediately preceding user statement.
+    retrospective_decision = re.fullmatch(
+        r"(?:what did we decide|"
+        r"what was (?:my|our) decision|"
+        r"summarize my decision)"
+        r"[?.! ]*",
+        question,
+        re.I,
+    )
+
+    if retrospective_decision:
+        if not history:
+            return [], "decision_recall_missing"
+
+        previous = history[-1]
+
+        if not isinstance(previous, dict):
+            return [], "decision_recall_missing"
+
+        prior = previous.get("user")
+
+        if not isinstance(prior, str) or not prior.strip():
+            return [], "decision_recall_missing"
+
+        return [
+            {"user": prior, "assistant": ""}
+        ], "decision_recall"
+
+    # v1.9.4 remediation 2: Bounded conversational evidence.
+    bounded_context_request = re.fullmatch(
+        r"(?:what should it prioritize|"
+        r"summarize what we know|"
+        r"did i approve it)"
+        r"[?.! ]*",
+        question,
+        re.I,
+    )
+
+    if bounded_context_request:
+        if not history:
+            return [], "bounded_context_missing"
+
+        previous = history[-1]
+
+        if not isinstance(previous, dict):
+            return [], "bounded_context_missing"
+
+        prior = previous.get("user")
+
+        if not isinstance(prior, str) or not prior.strip():
+            return [], "bounded_context_missing"
+
+        return [
+            {"user": prior, "assistant": ""}
+        ], "bounded_context"
+
     original = re.fullmatch(
         r"return to ([a-z][a-z -]*?)\.\s*what was the original topic\??",
         question, re.I)
