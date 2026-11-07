@@ -467,6 +467,23 @@ class ALFI:
                     "and " + self.ollama_model + " is installed. Details: " + str(exc))
 
     def respond(self, message):
+        # v1.9.5: Read the host clock only for explicit clock questions.
+        import re as _clock_re
+        from datetime import datetime as _clock_datetime
+
+        _clock_question = message.strip().lower().rstrip("?.! ")
+        if _clock_re.fullmatch(
+            r"(?:what(?:'s| is) the time|what time is it|"
+            r"tell me the time|current time|local time)",
+            _clock_question,
+        ):
+            _now = _clock_datetime.now().astimezone()
+            return (
+                "The local computer time is "
+                + _now.strftime("%I:%M:%S %p %Z (%Y-%m-%d)")
+                + "."
+            )
+
         shell_response = shell_command_response(message)
         if shell_response is not None:
             return shell_response
@@ -500,10 +517,17 @@ class ALFI:
             "what have you actually learned about me",
             "what do you remember about me",
             "what do you know about me",
+            "what do you remember",
+            "what can you remember",
         }:
             items = self.structured_memory.list_items()
             if not items:
-                return "I have no explicitly saved structured memories about you."
+                return (
+                    "I have no explicitly saved structured memories to report. "
+                    "Conversation history and taught knowledge are separate "
+                    "from structured memory. You can inspect them using "
+                    "/history and /knowledge."
+                )
             details = "; ".join(
                 f"{item['key']}: {item['value']} (source: {item['source']})"
                 for item in items
@@ -1036,6 +1060,30 @@ def main():
         if not message:
             continue
         command = message.lower()
+        # v1.9.5: Harmless terminal punctuation is not part
+        # of a slash command's identity.
+        if command.startswith("/"):
+            candidate = command.rstrip(".!? ")
+            known_commands = {
+                "/assess", "/propose", "/propose-context",
+                "/inspect", "/teach", "/knowledge", "/forget",
+                "/history", "/clearhistory", "/remember",
+                "/memories", "/recall", "/correct",
+                "/forgetmemory", "/status", "/help",
+                "/quit", "/cancel",
+            }
+            if candidate in known_commands:
+                command = candidate
+            elif not (
+                command.startswith("/propose ")
+                or command.startswith("/propose-context ")
+            ):
+                print(
+                    "A.L.F.I.: Unknown command. "
+                    "No action was performed. Use /help."
+                )
+                continue
+
         if command in {"/quit", "quit", "exit"}:
             print("A.L.F.I.: Goodbye!")
             break

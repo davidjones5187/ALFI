@@ -1,0 +1,25 @@
+{
+  "project": "A.L.F.I.",
+  "version": "1.9.5",
+  "release": "Interface Consistency and Capability Awareness",
+  "baseline_commit": "e324324",
+  "human_acceptance": "approved",
+  "accepted_at_utc": "2026-11-07T15:17:46.991536+00:00",
+  "verification": {
+    "interactive_behavior": "passed",
+    "regression_tests": 384,
+    "regression_failures": 0,
+    "python_syntax": "passed"
+  },
+  "changes": [
+    "Consistent structured-memory question routing",
+    "Host-computer local time awareness",
+    "Existing date handling preserved",
+    "Unknown command rejection",
+    "Trailing punctuation command normalization"
+  ],
+  "files": [
+    "first_ai.py",
+    "evaluation/v195/acceptance_record.json"
+  ]
+}
